@@ -446,7 +446,7 @@ void RenderSystem::setResolution(int newPlayAreaWidth, int newPlayAreaHeight) {
 	spriteHorizontalScale = view.getSize().x / tempLayerTexture.getSize().x;
 	spriteVerticalScale = view.getSize().y / tempLayerTexture.getSize().y;
 
-	for (auto& it = globalShaders.begin(); it != globalShaders.end(); it++) {
+	for (auto it = globalShaders.begin(); it != globalShaders.end(); it++) {
 		for (auto& shader : it->second) {
 			shader->setUniform("resolution", sf::Vector2f(newPlayAreaWidth, newPlayAreaHeight));
 		}

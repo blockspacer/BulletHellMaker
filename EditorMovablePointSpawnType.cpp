@@ -39,7 +39,7 @@ void EntityRelativeEMPSpawn::load(std::string formattedString) {
 MPSpawnInformation EntityRelativeEMPSpawn::getSpawnInfo(entt::DefaultRegistry & registry, uint32_t entity, float timeLag) {
 	// Assume that if the entity spawning this has no MovementPathComponent, it has stayed at the same global position for its entire lifespan
 	if (registry.has<MovementPathComponent>(entity)) {
-		auto& pos = registry.get<MovementPathComponent>(entity).getPreviousPosition(registry, timeLag);
+		auto pos = registry.get<MovementPathComponent>(entity).getPreviousPosition(registry, timeLag);
 		// Offset by the hitbox origin, if the entity has one
 		if (registry.has<HitboxComponent>(entity)) {
 			auto hitbox = registry.get<HitboxComponent>(entity);

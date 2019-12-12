@@ -1,7 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <entt/entt.hpp>
-#include <TGUI/TGUI.hpp>
 #include <memory>
 #include <vector>
 #include "MovementSystem.h"
@@ -96,6 +95,7 @@ private:
 	const float guiPaddingY = 10;
 
 	float windowHeight;
+	/*
 	std::shared_ptr<tgui::Gui> gui;
 
 	// levelNameLabel is also used to locate the right border of the play area (same as left border of the gui region)
@@ -147,6 +147,7 @@ private:
 	std::shared_ptr<tgui::Label> bossPhaseTimeLeft;
 	// Health bar for current phase
 	std::shared_ptr<tgui::ProgressBar> bossPhaseHealthBar;
+	*/
 	uint32_t currentBoss;
 	// Time after last phase change for next boss phase to start
 	float bossNextPhaseStartTime;

@@ -17,97 +17,97 @@
 #include <iostream>
 
 void GameInstance::updateWindowView(int windowWidth, int windowHeight) {
-	sf::View view = window->getView();
+	//sf::View view = window->getView();
 
-	// Compares the aspect ratio of the window to the aspect ratio of the view,
-	// and sets the view's viewport accordingly in order to archieve a letterbox effect.
-	// A new view (with a new viewport set) is returned.
-	float windowRatio = windowWidth / (float)windowHeight;
-	float playAreaViewRatio = view.getSize().x / (float)view.getSize().y;
-	// size of play area + gui region
-	float playAreaSizeX = 1;
-	float playAreaSizeY = 1;
-	float guiAreaSizeX = 1;
-	float posX = 0;
-	float posY = 0;
+	//// Compares the aspect ratio of the window to the aspect ratio of the view,
+	//// and sets the view's viewport accordingly in order to archieve a letterbox effect.
+	//// A new view (with a new viewport set) is returned.
+	//float windowRatio = windowWidth / (float)windowHeight;
+	//float playAreaViewRatio = view.getSize().x / (float)view.getSize().y;
+	//// size of play area + gui region
+	//float playAreaSizeX = 1;
+	//float playAreaSizeY = 1;
+	//float guiAreaSizeX = 1;
+	//float posX = 0;
+	//float posY = 0;
 
-	bool horizontalSpacing = true;
-	if (windowRatio < playAreaViewRatio)
-		horizontalSpacing = false;
+	//bool horizontalSpacing = true;
+	//if (windowRatio < playAreaViewRatio)
+	//	horizontalSpacing = false;
 
-	// If horizontalSpacing is true, the black bars will appear on the left and right side.
-	// Otherwise, the black bars will appear on the top and bottom.
-	if (horizontalSpacing) {
-		playAreaSizeX = playAreaViewRatio / windowRatio;
-		guiAreaSizeX = std::min(1 - playAreaSizeX, std::max(playAreaSizeX * 0.5f, (float)scoreLabel->getSize().x/windowWidth));
-		posX = (1 - playAreaSizeX - guiAreaSizeX) / 2.f;
-	} else {
-		playAreaSizeY = windowRatio / playAreaViewRatio;
-		posY = (1 - playAreaSizeY) / 2.f;
-	}
+	//// If horizontalSpacing is true, the black bars will appear on the left and right side.
+	//// Otherwise, the black bars will appear on the top and bottom.
+	//if (horizontalSpacing) {
+	//	playAreaSizeX = playAreaViewRatio / windowRatio;
+	//	guiAreaSizeX = std::min(1 - playAreaSizeX, std::max(playAreaSizeX * 0.5f, (float)scoreLabel->getSize().x/windowWidth));
+	//	posX = (1 - playAreaSizeX - guiAreaSizeX) / 2.f;
+	//} else {
+	//	playAreaSizeY = windowRatio / playAreaViewRatio;
+	//	posY = (1 - playAreaSizeY) / 2.f;
+	//}
 
-	view.setViewport(sf::FloatRect(posX, posY, playAreaSizeX, playAreaSizeY));
-	// Make sure nothing in the gui autoscales
-	gui->setView(sf::View(sf::Vector2f(windowWidth/2.0f, windowHeight/2.0f), sf::Vector2f(windowWidth, windowHeight)));
+	//view.setViewport(sf::FloatRect(posX, posY, playAreaSizeX, playAreaSizeY));
+	//// Make sure nothing in the gui autoscales
+	//gui->setView(sf::View(sf::Vector2f(windowWidth/2.0f, windowHeight/2.0f), sf::Vector2f(windowWidth, windowHeight)));
 
-	// Recalculate widths/positions of gui elements
-	//TODO: redo this entire part; what do sizeX and sizeY really represent????
-	guiRegionX = (playAreaSizeX + posX) * windowWidth;
-	guiRegionYLow = posY * windowHeight;
-	guiRegionYHigh = (playAreaSizeY + posY) * windowHeight;
-	guiRegionWidth = guiAreaSizeX * windowWidth;
-	guiRegionHeight = guiRegionYHigh - guiRegionYLow;
-	playAreaX = posX * windowWidth;
-	float playAreaWidth = playAreaSizeX * windowWidth;
-	// Since everything in the gui is bound to levelNameLabel's x position, only levelNameLabel's position needs to be updated 
-	levelNameLabel->setPosition({ guiRegionX + guiPaddingX, guiPaddingY });
+	//// Recalculate widths/positions of gui elements
+	////TODO: redo this entire part; what do sizeX and sizeY really represent????
+	//guiRegionX = (playAreaSizeX + posX) * windowWidth;
+	//guiRegionYLow = posY * windowHeight;
+	//guiRegionYHigh = (playAreaSizeY + posY) * windowHeight;
+	//guiRegionWidth = guiAreaSizeX * windowWidth;
+	//guiRegionHeight = guiRegionYHigh - guiRegionYLow;
+	//playAreaX = posX * windowWidth;
+	//float playAreaWidth = playAreaSizeX * windowWidth;
+	//// Since everything in the gui is bound to levelNameLabel's x position, only levelNameLabel's position needs to be updated 
+	//levelNameLabel->setPosition({ guiRegionX + guiPaddingX, guiPaddingY });
 
-	levelNameLabel->setMaximumTextWidth(guiRegionWidth - guiPaddingX * 2.0f);
+	//levelNameLabel->setMaximumTextWidth(guiRegionWidth - guiPaddingX * 2.0f);
 
-	bombPictureSize = std::max(bombPictureSizeMin, std::min(bombPictureSizeMax, (guiRegionWidth - guiPaddingX * 2) / levelPack->getPlayer().getMaxBombs()));
-	bombPictureDisplayMax = (int)(guiRegionWidth - 2 * guiPaddingX) / (bombPictureSize + guiPaddingX);
-	for (int i = 0; i < bombPictures.size(); i++) {
-		bombPictures[i]->setSize(bombPictureSize, bombPictureSize);
-	}
-	if (registry.valid(registry.attachee<PlayerTag>())) {
-		onPlayerBombCountChange(registry.get<PlayerTag>().getBombCount());
-	}
+	//bombPictureSize = std::max(bombPictureSizeMin, std::min(bombPictureSizeMax, (guiRegionWidth - guiPaddingX * 2) / levelPack->getPlayer().getMaxBombs()));
+	//bombPictureDisplayMax = (int)(guiRegionWidth - 2 * guiPaddingX) / (bombPictureSize + guiPaddingX);
+	//for (int i = 0; i < bombPictures.size(); i++) {
+	//	bombPictures[i]->setSize(bombPictureSize, bombPictureSize);
+	//}
+	//if (registry.valid(registry.attachee<PlayerTag>())) {
+	//	onPlayerBombCountChange(registry.get<PlayerTag>().getBombCount());
+	//}
 
-	bombPictureGrid->setPosition({ tgui::bindLeft(levelNameLabel), guiRegionHeight - bombPictureSize - guiPaddingY });
+	//bombPictureGrid->setPosition({ tgui::bindLeft(levelNameLabel), guiRegionHeight - bombPictureSize - guiPaddingY });
 
-	if (playerHPProgressBar) {
-		playerHPProgressBar->setSize(guiRegionWidth - guiPaddingX * 2.0f, 22);
-	} else {
-		playerHPPictureSize = std::max(playerHPPictureSizeMin, std::min(playerHPPictureSizeMax, (guiRegionWidth - guiPaddingX * 2) / levelPack->getPlayer().getMaxHealth()));
-		playerHPPictureDisplayMax = (int)(guiRegionWidth - 2 * guiPaddingX) / (playerHPPictureSize + guiPaddingX);
-		for (int i = 0; i < playerHPPictures.size(); i++) {
-			playerHPPictures[i]->setSize(playerHPPictureSize, playerHPPictureSize);
-		}
-		playerHPPictureGrid->setPosition({ tgui::bindLeft(bombPictureGrid), tgui::bindTop(bombLabel) - guiPaddingY - playerHPPictureSize });
-		if (registry.valid(registry.attachee<PlayerTag>())) {
-			onPlayerHPChange(registry.get<HealthComponent>(registry.attachee<PlayerTag>()).getHealth(), registry.get<HealthComponent>(registry.attachee<PlayerTag>()).getMaxHealth());
-		}
-	}
+	//if (playerHPProgressBar) {
+	//	playerHPProgressBar->setSize(guiRegionWidth - guiPaddingX * 2.0f, 22);
+	//} else {
+	//	playerHPPictureSize = std::max(playerHPPictureSizeMin, std::min(playerHPPictureSizeMax, (guiRegionWidth - guiPaddingX * 2) / levelPack->getPlayer().getMaxHealth()));
+	//	playerHPPictureDisplayMax = (int)(guiRegionWidth - 2 * guiPaddingX) / (playerHPPictureSize + guiPaddingX);
+	//	for (int i = 0; i < playerHPPictures.size(); i++) {
+	//		playerHPPictures[i]->setSize(playerHPPictureSize, playerHPPictureSize);
+	//	}
+	//	playerHPPictureGrid->setPosition({ tgui::bindLeft(bombPictureGrid), tgui::bindTop(bombLabel) - guiPaddingY - playerHPPictureSize });
+	//	if (registry.valid(registry.attachee<PlayerTag>())) {
+	//		onPlayerHPChange(registry.get<HealthComponent>(registry.attachee<PlayerTag>()).getHealth(), registry.get<HealthComponent>(registry.attachee<PlayerTag>()).getMaxHealth());
+	//	}
+	//}
 
-	bossLabel->setPosition(playAreaX, guiRegionYLow);
+	//bossLabel->setPosition(playAreaX, guiRegionYLow);
 
-	bossPhaseHealthBar->setSize(playAreaWidth, bossPhaseHealthBarHeight);
-	bossPhaseHealthBar->setPosition(playAreaX, guiRegionYLow);
+	//bossPhaseHealthBar->setSize(playAreaWidth, bossPhaseHealthBarHeight);
+	//bossPhaseHealthBar->setPosition(playAreaX, guiRegionYLow);
 
-	if (bossPhaseTimeLeft->isVisible() && registry.valid(registry.attachee<PlayerTag>())) {
-		uint32_t player = registry.attachee<PlayerTag>();
-		auto& playerHitbox = registry.get<HitboxComponent>(player);
-		auto& pos = registry.get<PositionComponent>(player);
-		if (pos.getX() + playerHitbox.getX() - playerHitbox.getRadius() < MAP_WIDTH / 2.0f) {
-			bossPhaseTimeLeft->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Right);
-			bossPhaseTimeLeft->setPosition(guiRegionX - bossPhaseTimeLeft->getSize().x, guiRegionYHigh - bossPhaseTimeLeft->getSize().y);
-		} else {
-			bossPhaseTimeLeft->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Left);
-			bossPhaseTimeLeft->setPosition(playAreaX, guiRegionYHigh - bossPhaseTimeLeft->getSize().y);
-		}
-	}
+	//if (bossPhaseTimeLeft->isVisible() && registry.valid(registry.attachee<PlayerTag>())) {
+	//	uint32_t player = registry.attachee<PlayerTag>();
+	//	auto& playerHitbox = registry.get<HitboxComponent>(player);
+	//	auto& pos = registry.get<PositionComponent>(player);
+	//	if (pos.getX() + playerHitbox.getX() - playerHitbox.getRadius() < MAP_WIDTH / 2.0f) {
+	//		bossPhaseTimeLeft->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Right);
+	//		bossPhaseTimeLeft->setPosition(guiRegionX - bossPhaseTimeLeft->getSize().x, guiRegionYHigh - bossPhaseTimeLeft->getSize().y);
+	//	} else {
+	//		bossPhaseTimeLeft->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Left);
+	//		bossPhaseTimeLeft->setPosition(playAreaX, guiRegionYHigh - bossPhaseTimeLeft->getSize().y);
+	//	}
+	//}
 
-	window->setView(view);
+	//window->setView(view);
 }
 
 GameInstance::GameInstance(std::string levelPackName) {
@@ -123,40 +123,40 @@ GameInstance::GameInstance(std::string levelPackName) {
 	window->setView(view);
 
 	// Create these first because updateWindowView uses them
-	gui = std::make_shared<tgui::Gui>(*window);
-	levelNameLabel = tgui::Label::create();
-	bossPhaseTimeLeft = tgui::Label::create();
-	bossPhaseHealthBar = tgui::ProgressBar::create();
-	bombPictureGrid = tgui::Grid::create();
-	bombLabel = tgui::Label::create();
-	bossLabel = tgui::Label::create();
-	sf::Texture bombTexture;
-	if (!bombTexture.loadFromFile("Level Packs\\" + levelPack->getName() + "\\" + levelPack->getPlayer().getBombSprite().getAnimatableName())) {
-		//TODO: error handling
-	}
-	for (int i = 0; i < levelPack->getPlayer().getMaxBombs(); i++) {
-		auto bombPicture = tgui::Picture::create(bombTexture);
-		bombPicture->setSize(bombPictureSize, bombPictureSize);
-		bombPictures.push_back(bombPicture);
-	}
-	if (!smoothPlayerHPBar) {
-		playerHPPictureGrid = tgui::Grid::create();
+	//gui = std::make_shared<tgui::Gui>(*window);
+	//levelNameLabel = tgui::Label::create();
+	//bossPhaseTimeLeft = tgui::Label::create();
+	//bossPhaseHealthBar = tgui::ProgressBar::create();
+	//bombPictureGrid = tgui::Grid::create();
+	//bombLabel = tgui::Label::create();
+	//bossLabel = tgui::Label::create();
+	//sf::Texture bombTexture;
+	//if (!bombTexture.loadFromFile("Level Packs\\" + levelPack->getName() + "\\" + levelPack->getPlayer().getBombSprite().getAnimatableName())) {
+	//	//TODO: error handling
+	//}
+	//for (int i = 0; i < levelPack->getPlayer().getMaxBombs(); i++) {
+	//	auto bombPicture = tgui::Picture::create(bombTexture);
+	//	bombPicture->setSize(bombPictureSize, bombPictureSize);
+	//	bombPictures.push_back(bombPicture);
+	//}
+	//if (!smoothPlayerHPBar) {
+	//	playerHPPictureGrid = tgui::Grid::create();
 
-		sf::Texture playerHPTexture;
-		if (!playerHPTexture.loadFromFile("Level Packs\\" + levelPack->getName() + "\\" + levelPack->getPlayer().getDiscretePlayerHPSprite().getAnimatableName())) {
-			//TODO: error handling
-		}
+	//	sf::Texture playerHPTexture;
+	//	if (!playerHPTexture.loadFromFile("Level Packs\\" + levelPack->getName() + "\\" + levelPack->getPlayer().getDiscretePlayerHPSprite().getAnimatableName())) {
+	//		//TODO: error handling
+	//	}
 
-		for (int i = 0; i < levelPack->getPlayer().getMaxHealth(); i++) {
-			auto playerHPPicture = tgui::Picture::create(playerHPTexture);
-			playerHPPicture->setSize(playerHPPictureSize, playerHPPictureSize);
-			playerHPPictures.push_back(playerHPPicture);
-		}
-	}
-	scoreLabel = tgui::Label::create();
-	scoreLabel->setTextSize(24);
-	scoreLabel->setMaximumTextWidth(0);
-	scoreLabel->setText((boost::format("Score\n%010d") % 0).str());
+	//	for (int i = 0; i < levelPack->getPlayer().getMaxHealth(); i++) {
+	//		auto playerHPPicture = tgui::Picture::create(playerHPTexture);
+	//		playerHPPicture->setSize(playerHPPictureSize, playerHPPictureSize);
+	//		playerHPPictures.push_back(playerHPPicture);
+	//	}
+	//}
+	//scoreLabel = tgui::Label::create();
+	//scoreLabel->setTextSize(24);
+	//scoreLabel->setMaximumTextWidth(0);
+	//scoreLabel->setText((boost::format("Score\n%010d") % 0).str());
 
 	updateWindowView(window->getSize().x, window->getSize().y);
 
@@ -181,92 +181,92 @@ GameInstance::GameInstance(std::string levelPackName) {
 	// GUI stuff
 
 	// Note: "GUI region" refers to the right side of the window that doesn't contain the stuff from RenderSystem
-	smoothPlayerHPBar = levelPack->getPlayer().getSmoothPlayerHPBar();
+	//smoothPlayerHPBar = levelPack->getPlayer().getSmoothPlayerHPBar();
 
-	gui->setFont(tgui::Font("Level Packs\\" + levelPack->getName() + "\\" + levelPack->getFontFileName()));
+	//gui->setFont(tgui::Font("Level Packs\\" + levelPack->getName() + "\\" + levelPack->getFontFileName()));
 
-	// Level name label
-	levelNameLabel->setTextSize(26);
-	levelNameLabel->setAutoSize(true);
-	levelNameLabel->setMaximumTextWidth(guiRegionWidth - guiPaddingX * 2.0f);
-	levelNameLabel->setPosition({guiRegionX + guiPaddingX, guiPaddingY});
-	gui->add(levelNameLabel);
+	//// Level name label
+	//levelNameLabel->setTextSize(26);
+	//levelNameLabel->setAutoSize(true);
+	//levelNameLabel->setMaximumTextWidth(guiRegionWidth - guiPaddingX * 2.0f);
+	//levelNameLabel->setPosition({guiRegionX + guiPaddingX, guiPaddingY});
+	//gui->add(levelNameLabel);
 
-	// Score label
-	scoreLabel->setPosition({ tgui::bindLeft(levelNameLabel), tgui::bindBottom(levelNameLabel) + guiPaddingY });
-	gui->add(scoreLabel);
+	//// Score label
+	//scoreLabel->setPosition({ tgui::bindLeft(levelNameLabel), tgui::bindBottom(levelNameLabel) + guiPaddingY });
+	//gui->add(scoreLabel);
 
-	// Power label
-	powerLabel = tgui::Label::create();
-	powerLabel->setTextSize(24);
-	powerLabel->setMaximumTextWidth(0);
-	powerLabel->setPosition({ tgui::bindLeft(levelNameLabel), tgui::bindBottom(scoreLabel) + guiPaddingY });
-	gui->add(powerLabel);
+	//// Power label
+	//powerLabel = tgui::Label::create();
+	//powerLabel->setTextSize(24);
+	//powerLabel->setMaximumTextWidth(0);
+	//powerLabel->setPosition({ tgui::bindLeft(levelNameLabel), tgui::bindBottom(scoreLabel) + guiPaddingY });
+	//gui->add(powerLabel);
 
-	// Bomb grid
-	bombPictureGrid->setPosition({ tgui::bindLeft(levelNameLabel), guiRegionHeight - bombPictureSize - guiPaddingY });
-	gui->add(bombPictureGrid);
-	bombPicturesInGrid = 0;
+	//// Bomb grid
+	//bombPictureGrid->setPosition({ tgui::bindLeft(levelNameLabel), guiRegionHeight - bombPictureSize - guiPaddingY });
+	//gui->add(bombPictureGrid);
+	//bombPicturesInGrid = 0;
 
-	// Bomb label
-	bombLabel->setTextSize(24);
-	bombLabel->setMaximumTextWidth(0);
-	bombLabel->setText("Bombs");
-	bombLabel->setPosition({ tgui::bindLeft(bombPictureGrid), tgui::bindTop(bombPictureGrid) - bombLabel->getSize().y });
-	gui->add(bombLabel);
+	//// Bomb label
+	//bombLabel->setTextSize(24);
+	//bombLabel->setMaximumTextWidth(0);
+	//bombLabel->setText("Bombs");
+	//bombLabel->setPosition({ tgui::bindLeft(bombPictureGrid), tgui::bindTop(bombPictureGrid) - bombLabel->getSize().y });
+	//gui->add(bombLabel);
 
-	bombCountLabel = tgui::Label::create();
-	bombCountLabel->setTextSize(24);
-	bombCountLabel->setMaximumTextWidth(0);
+	//bombCountLabel = tgui::Label::create();
+	//bombCountLabel->setTextSize(24);
+	//bombCountLabel->setMaximumTextWidth(0);
 
-	if (smoothPlayerHPBar) {
-		// Progress bar for player HP
-		playerHPProgressBar = tgui::ProgressBar::create();
-		playerHPProgressBar->setFillDirection(tgui::ProgressBar::FillDirection::LeftToRight);
-		playerHPProgressBar->setMinimum(0);
-		playerHPProgressBar->setMaximum(levelPack->getPlayer().getMaxHealth());
-		playerHPProgressBar->setSize(guiRegionWidth - guiPaddingX * 2.0f, 22);
-		playerHPProgressBar->setPosition({ tgui::bindLeft(levelNameLabel), guiRegionHeight - playerHPProgressBar->getSize().y - guiPaddingY });
-		playerHPProgressBar->getRenderer()->setBackgroundColor(tgui::Color(sf::Color(255, 170, 170, 255)));
-		playerHPProgressBar->getRenderer()->setFillColor(tgui::Color::Red);
-		playerHPProgressBar->getRenderer()->setTextColor(tgui::Color::White);
-		playerHPProgressBar->getRenderer()->setBorderColor(tgui::Color::White);
-		gui->add(playerHPProgressBar);
-	} else {
-		playerHPPictureGrid->setPosition({ tgui::bindLeft(bombPictureGrid), tgui::bindTop(bombLabel) - guiPaddingY - playerHPPictureSize });
-		gui->add(playerHPPictureGrid);
-		hpPicturesInGrid = 0;
+	//if (smoothPlayerHPBar) {
+	//	// Progress bar for player HP
+	//	playerHPProgressBar = tgui::ProgressBar::create();
+	//	playerHPProgressBar->setFillDirection(tgui::ProgressBar::FillDirection::LeftToRight);
+	//	playerHPProgressBar->setMinimum(0);
+	//	playerHPProgressBar->setMaximum(levelPack->getPlayer().getMaxHealth());
+	//	playerHPProgressBar->setSize(guiRegionWidth - guiPaddingX * 2.0f, 22);
+	//	playerHPProgressBar->setPosition({ tgui::bindLeft(levelNameLabel), guiRegionHeight - playerHPProgressBar->getSize().y - guiPaddingY });
+	//	playerHPProgressBar->getRenderer()->setBackgroundColor(tgui::Color(sf::Color(255, 170, 170, 255)));
+	//	playerHPProgressBar->getRenderer()->setFillColor(tgui::Color::Red);
+	//	playerHPProgressBar->getRenderer()->setTextColor(tgui::Color::White);
+	//	playerHPProgressBar->getRenderer()->setBorderColor(tgui::Color::White);
+	//	gui->add(playerHPProgressBar);
+	//} else {
+	//	playerHPPictureGrid->setPosition({ tgui::bindLeft(bombPictureGrid), tgui::bindTop(bombLabel) - guiPaddingY - playerHPPictureSize });
+	//	gui->add(playerHPPictureGrid);
+	//	hpPicturesInGrid = 0;
 
-		playerHPLabel = tgui::Label::create();
-		playerHPLabel->setTextSize(24);
-		playerHPLabel->setMaximumTextWidth(0);
-		playerHPLabel->setText("Health");
-		playerHPLabel->setPosition({ tgui::bindLeft(playerHPPictureGrid), tgui::bindTop(playerHPPictureGrid) - playerHPLabel->getSize().y });
-		gui->add(playerHPLabel);
+	//	playerHPLabel = tgui::Label::create();
+	//	playerHPLabel->setTextSize(24);
+	//	playerHPLabel->setMaximumTextWidth(0);
+	//	playerHPLabel->setText("Health");
+	//	playerHPLabel->setPosition({ tgui::bindLeft(playerHPPictureGrid), tgui::bindTop(playerHPPictureGrid) - playerHPLabel->getSize().y });
+	//	gui->add(playerHPLabel);
 
-		playerDiscreteHPCountLabel = tgui::Label::create();
-		playerDiscreteHPCountLabel->setTextSize(24);
-		playerDiscreteHPCountLabel->setMaximumTextWidth(0);
-	}
+	//	playerDiscreteHPCountLabel = tgui::Label::create();
+	//	playerDiscreteHPCountLabel->setTextSize(24);
+	//	playerDiscreteHPCountLabel->setMaximumTextWidth(0);
+	//}
 
-	// Boss stuff
-	bossLabel->setTextSize(26);
-	bossLabel->setMaximumTextWidth(window->getSize().x - guiRegionWidth);
-	bossLabel->setVisible(false);
-	gui->add(bossLabel);
+	//// Boss stuff
+	//bossLabel->setTextSize(26);
+	//bossLabel->setMaximumTextWidth(window->getSize().x - guiRegionWidth);
+	//bossLabel->setVisible(false);
+	//gui->add(bossLabel);
 
-	bossPhaseTimeLeft->setTextSize(26);
-	bossPhaseTimeLeft->setMaximumTextWidth(0);
-	bossPhaseTimeLeft->setVisible(false);
-	gui->add(bossPhaseTimeLeft);
+	//bossPhaseTimeLeft->setTextSize(26);
+	//bossPhaseTimeLeft->setMaximumTextWidth(0);
+	//bossPhaseTimeLeft->setVisible(false);
+	//gui->add(bossPhaseTimeLeft);
 
-	bossPhaseHealthBar->setFillDirection(tgui::ProgressBar::FillDirection::LeftToRight);
-	bossPhaseHealthBar->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
-	bossPhaseHealthBar->getRenderer()->setFillColor(tgui::Color::Red);
-	bossPhaseHealthBar->getRenderer()->setTextColor(tgui::Color::White);
-	bossPhaseHealthBar->getRenderer()->setBorderColor(tgui::Color::Transparent);
-	bossPhaseHealthBar->setVisible(false);
-	gui->add(bossPhaseHealthBar);
+	//bossPhaseHealthBar->setFillDirection(tgui::ProgressBar::FillDirection::LeftToRight);
+	//bossPhaseHealthBar->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
+	//bossPhaseHealthBar->getRenderer()->setFillColor(tgui::Color::Red);
+	//bossPhaseHealthBar->getRenderer()->setTextColor(tgui::Color::White);
+	//bossPhaseHealthBar->getRenderer()->setBorderColor(tgui::Color::Transparent);
+	//bossPhaseHealthBar->setVisible(false);
+	//gui->add(bossPhaseHealthBar);
 }
 
 void GameInstance::start() {
@@ -348,32 +348,32 @@ void GameInstance::render(float deltaTime) {
 	renderSystem->update(deltaTime);
 
 	// Update bomb opacity depending on time left until cooldown is over
-	auto& playerTag = registry.get<PlayerTag>();
-	float opacity = std::min(playerTag.getTimeSinceLastBombActivation()/playerTag.getBombCooldown(), 1.0f);
-	bombPictureGrid->setInheritedOpacity(opacity);
+	//auto& playerTag = registry.get<PlayerTag>();
+	//float opacity = std::min(playerTag.getTimeSinceLastBombActivation()/playerTag.getBombCooldown(), 1.0f);
+	//bombPictureGrid->setInheritedOpacity(opacity);
 
-	if (bossPhaseHealthBar->isVisible()) {
-		bossPhaseHealthBar->setValue(registry.get<HealthComponent>(currentBoss).getHealth());
-	}
-	if (bossPhaseTimeLeft->isVisible()) {
-		bossPhaseTimeLeft->setText((boost::format("%.2f") % (bossNextPhaseStartTime - registry.get<EnemyComponent>(currentBoss).getTimeSinceLastPhase())).str());
+	//if (bossPhaseHealthBar->isVisible()) {
+	//	bossPhaseHealthBar->setValue(registry.get<HealthComponent>(currentBoss).getHealth());
+	//}
+	//if (bossPhaseTimeLeft->isVisible()) {
+	//	bossPhaseTimeLeft->setText((boost::format("%.2f") % (bossNextPhaseStartTime - registry.get<EnemyComponent>(currentBoss).getTimeSinceLastPhase())).str());
 
-		// Move timer based on player position so that the user's vision isn't obstructed
-		uint32_t player = registry.attachee<PlayerTag>();
-		auto& playerHitbox = registry.get<HitboxComponent>(player);
-		auto& pos = registry.get<PositionComponent>(player);
-		if (pos.getY() + playerHitbox.getY() - playerHitbox.getRadius() < MAP_HEIGHT / 4.0f) {
-			if (pos.getX() + playerHitbox.getX() - playerHitbox.getRadius() < MAP_WIDTH / 3.0f) {
-				bossPhaseTimeLeft->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Right);
-				bossPhaseTimeLeft->setPosition(guiRegionX - bossPhaseTimeLeft->getSize().x, guiRegionYHigh - bossPhaseTimeLeft->getSize().y);
-			} else if (pos.getX() + playerHitbox.getX() + playerHitbox.getRadius() > MAP_WIDTH * 2 / 3.0f) {
-				bossPhaseTimeLeft->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Left);
-				bossPhaseTimeLeft->setPosition(playAreaX, guiRegionYHigh - bossPhaseTimeLeft->getSize().y);
-			}
-		}
-	}
+	//	// Move timer based on player position so that the user's vision isn't obstructed
+	//	uint32_t player = registry.attachee<PlayerTag>();
+	//	auto& playerHitbox = registry.get<HitboxComponent>(player);
+	//	auto& pos = registry.get<PositionComponent>(player);
+	//	if (pos.getY() + playerHitbox.getY() - playerHitbox.getRadius() < MAP_HEIGHT / 4.0f) {
+	//		if (pos.getX() + playerHitbox.getX() - playerHitbox.getRadius() < MAP_WIDTH / 3.0f) {
+	//			bossPhaseTimeLeft->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Right);
+	//			bossPhaseTimeLeft->setPosition(guiRegionX - bossPhaseTimeLeft->getSize().x, guiRegionYHigh - bossPhaseTimeLeft->getSize().y);
+	//		} else if (pos.getX() + playerHitbox.getX() + playerHitbox.getRadius() > MAP_WIDTH * 2 / 3.0f) {
+	//			bossPhaseTimeLeft->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Left);
+	//			bossPhaseTimeLeft->setPosition(playAreaX, guiRegionYHigh - bossPhaseTimeLeft->getSize().y);
+	//		}
+	//	}
+	//}
 
-	gui->draw();
+	//gui->draw();
 }
 
 void GameInstance::loadLevel(int levelIndex) {
@@ -383,7 +383,7 @@ void GameInstance::loadLevel(int levelIndex) {
 	renderSystem->loadLevelRenderSettings(level);
 
 	// Update relevant gui elements
-	levelNameLabel->setText(level->getName());
+	//levelNameLabel->setText(level->getName());
 
 	// Remove all existing entities from the registry
 	registry.reset();
@@ -431,7 +431,7 @@ void GameInstance::endLevel() {
 }
 
 void GameInstance::handleEvent(sf::Event event) {
-	gui->handleEvent(event);
+	//gui->handleEvent(event);
 	playerSystem->handleEvent(event);
 }
 
@@ -445,7 +445,7 @@ void GameInstance::resume() {
 }
 
 void GameInstance::onPlayerHPChange(int newHP, int maxHP) {
-	if (smoothPlayerHPBar) {
+	/*if (smoothPlayerHPBar) {
 		playerHPProgressBar->setValue(newHP);
 		playerHPProgressBar->setText(std::to_string(newHP) + "/" + std::to_string(maxHP));
 	} else {
@@ -461,23 +461,23 @@ void GameInstance::onPlayerHPChange(int newHP, int maxHP) {
 			}
 		}
 		hpPicturesInGrid = newHP;
-	}
+	}*/
 }
 
 void GameInstance::onPointsChange(int levelPoints) {
-	scoreLabel->setText((boost::format("Score\n%010d") % (points + levelPoints)).str());
+	//scoreLabel->setText((boost::format("Score\n%010d") % (points + levelPoints)).str());
 }
 
 void GameInstance::onPlayerPowerLevelChange(int powerLevelIndex, int powerLevelMaxTierCount, int powerLevel) {
-	if (powerLevelIndex == powerLevelMaxTierCount - 1) {
+	/*if (powerLevelIndex == powerLevelMaxTierCount - 1) {
 		powerLabel->setText("Power (Lv. " + std::to_string(powerLevelMaxTierCount) + ")\nMAX");
 	} else {
 		powerLabel->setText("Power (Lv. " + std::to_string(powerLevelIndex + 1) + ")\n" + std::to_string(powerLevel) + "/" + std::to_string(POWER_PER_POWER_TIER));
-	}
+	}*/
 }
 
 void GameInstance::onPlayerBombCountChange(int newBombCount) {
-	if (bombPicturesInGrid < newBombCount) {
+	/*if (bombPicturesInGrid < newBombCount) {
 		for (int i = bombPicturesInGrid; i < newBombCount; i++) {
 			bombPictureGrid->addWidget(bombPictures[i], 0, i);
 			bombPictureGrid->setWidgetPadding(0, i, tgui::Padding(bombGridPadding, bombGridPadding, bombGridPadding, bombGridPadding));
@@ -494,8 +494,8 @@ void GameInstance::onPlayerBombCountChange(int newBombCount) {
 				bombPictureGrid->setWidgetPadding(0, i, tgui::Padding(bombGridPadding, bombGridPadding, bombGridPadding, bombGridPadding));
 			}
 		}
-	}
-	bombPicturesInGrid = newBombCount;
+	}*/
+	//bombPicturesInGrid = newBombCount;
 }
 
 void GameInstance::onEnemySpawn(uint32_t enemy) {
@@ -505,8 +505,8 @@ void GameInstance::onEnemySpawn(uint32_t enemy) {
 		return;
 	}
 	
-	bossLabel->setVisible(true);
-	bossLabel->setText(data->getName());
+	/*bossLabel->setVisible(true);
+	bossLabel->setText(data->getName());*/
 
 	currentBoss = enemy;
 	enemyComponent.getEnemyPhaseChangeSignal()->sink().connect<GameInstance, &GameInstance::onBossPhaseChange>(this);
@@ -518,7 +518,7 @@ void GameInstance::onBossPhaseChange(uint32_t boss, std::shared_ptr<EditorEnemyP
 	const std::shared_ptr<EditorEnemy> data = enemyComponent.getEnemyData();
 	if (!nextPhaseStartCondition || std::dynamic_pointer_cast<HPBasedEnemyPhaseStartCondition>(nextPhaseStartCondition)) {
 		// Show phase HP bar
-		bossPhaseTimeLeft->setVisible(false);
+		/*bossPhaseTimeLeft->setVisible(false);
 		bossPhaseHealthBar->setVisible(true);
 		// No need to push boss name label down to make room for HP bar because the label already has enough space on top for the bar
 
@@ -532,10 +532,10 @@ void GameInstance::onBossPhaseChange(uint32_t boss, std::shared_ptr<EditorEnemyP
 		} else {
 			// If previous phase start condition was not HP based, set the maximum of the progress bar to be whatever the last known health is
 			bossPhaseHealthBar->setMaximum(registry.get<HealthComponent>(boss).getHealth());
-		}
+		}*/
 	} else {
 		// Show timer
-		bossPhaseTimeLeft->setVisible(true);
+		/*bossPhaseTimeLeft->setVisible(true);
 		bossPhaseHealthBar->setVisible(false);
 		bossPhaseTimeLeft->setText((boost::format("%.2f") % (bossNextPhaseStartTime - registry.get<EnemyComponent>(boss).getTimeSinceLastPhase())).str());
 
@@ -546,14 +546,14 @@ void GameInstance::onBossPhaseChange(uint32_t boss, std::shared_ptr<EditorEnemyP
 			bossPhaseTimeLeft->setPosition(0, windowHeight - bossPhaseTimeLeft->getSize().y);
 		} else {
 			bossPhaseTimeLeft->setPosition(guiRegionX - bossPhaseTimeLeft->getSize().x, windowHeight - bossPhaseTimeLeft->getSize().y);
-		}
+		}*/
 	}
 }
 
 void GameInstance::onBossDespawn(uint32_t boss) {
-	bossLabel->setVisible(false);
+	/*bossLabel->setVisible(false);
 	bossPhaseTimeLeft->setVisible(false);
-	bossPhaseHealthBar->setVisible(false);
+	bossPhaseHealthBar->setVisible(false);*/
 }
 
 void GameInstance::createPlayer(EditorPlayer params) {

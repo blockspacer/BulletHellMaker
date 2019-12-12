@@ -6,3 +6,10 @@ Debug dev
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
+*.pro
+*.sln
+.qmake.stash
+debug
+release
+x64
+.vs

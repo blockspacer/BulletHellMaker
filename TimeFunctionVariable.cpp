@@ -105,6 +105,168 @@ void PiecewiseContinuousTFV::load(std::string formattedString) {
 	}
 }
 
+<<<<<<< Updated upstream
+=======
+float PiecewiseTFV::evaluate(float time) {
+	int l = 0;
+	int h = segments.size(); // Not n - 1
+	while (l < h) {
+		int mid = (l + h) / 2;
+		if (time <= segments[mid].first) {
+			h = mid;
+		} else {
+			l = mid + 1;
+		}
+	}
+
+	int i;
+	for (i = std::max(0, l - 1); i < segments.size(); i++) {
+		if (i >= 0 && time < segments[i].first) {
+			i--;
+			break;
+		}
+	}
+
+	auto it = segments.begin() + i;
+	if (it == segments.end()) {
+		return segments.back().second->evaluate(time - segments.back().first);
+	} else {
+		return it->second->evaluate(time - it->first);
+	}
+}
+
+std::pair<float, int> PiecewiseTFV::piecewiseEvaluate(float time) {
+	int l = 0;
+	int h = segments.size(); // Not n - 1
+	while (l < h) {
+		int mid = (l + h) / 2;
+		if (time <= segments[mid].first) {
+			h = mid;
+		} else {
+			l = mid + 1;
+		}
+	}
+
+	int i;
+	for (i = std::max(0, l - 1); i < segments.size(); i++) {
+		if (i >= 0 && time < segments[i].first) {
+			i--;
+			break;
+		}
+	}
+
+	auto it = segments.begin() + i;
+	if (it == segments.end()) {
+		return std::make_pair(segments.back().second->evaluate(time - segments.back().first), segments.size() - 1);
+	} else {
+		return std::make_pair(it->second->evaluate(time - it->first), it - segments.begin());
+	}
+}
+
+void PiecewiseTFV::insertSegment(int index, std::pair<float, std::shared_ptr<TFV>> segment, float totalLifespan) {
+	// Recalculate active times
+	for (int i = index; i < segments.size(); i++) {
+		segments[i].first += segment.first;
+	}
+	if (index != 0) {
+		segment.first += segments[index - 1].first;
+	} else {
+		segment.first = 0;
+	}
+	segments.insert(segments.begin() + index, segment);
+	recalculateMaxTimes(totalLifespan);
+}
+
+void PiecewiseTFV::insertSegment(std::pair<float, std::shared_ptr<TFV>> segment, float totalLifespan) {
+	int l = 0;
+	int h = segments.size();
+	while (l < h) {
+		int mid = (l + h) / 2;
+		if (segment.first <= segments[mid].first) {
+			h = mid;
+		} else {
+			l = mid + 1;
+		}
+	}
+
+	int i;
+	for (i = std::max(0, l - 1); i < segments.size(); i++) {
+		if (i >= 0 && segment.first < segments[i].first) {
+			i--;
+			break;
+		}
+	}
+
+	auto it = segments.begin() + i;
+	segments.insert(it, segment);
+	recalculateMaxTimes(totalLifespan);
+}
+
+void PiecewiseTFV::removeSegment(int index, float totalLifespan) {
+	auto erasedActiveTime = (segments.begin() + index)->first;
+	segments.erase(segments.begin() + index);
+	// Recalculate active times
+	for (int i = index; i < segments.size(); i++) {
+		segments[i].first -= erasedActiveTime;
+	}
+	recalculateMaxTimes(totalLifespan);
+}
+
+void PiecewiseTFV::changeSegment(int index, std::shared_ptr<TFV> newTFV, float totalLifespan) {
+	segments[index].second = newTFV;
+	recalculateMaxTimes(totalLifespan);
+}
+
+int PiecewiseTFV::changeSegmentStartTime(int segmentIndex, float newStartTime, float totalLifespan) {
+	segments[segmentIndex].first = newStartTime;
+	if (segmentIndex != 0 && newStartTime < segments[segmentIndex - 1].first) {
+		int i = segmentIndex - 1;
+		while (i != -1 && newStartTime < segments[i].first) {
+			std::iter_swap(segments.begin() + i, segments.begin() + i + 1);
+			i--;
+		}
+		return i + 1;
+	} else if (segmentIndex != segments.size() - 1 && newStartTime > segments[segmentIndex + 1].first) {
+		int i = segmentIndex + 1;
+		while (i != segments.size() && newStartTime > segments[i].first) {
+			std::iter_swap(segments.begin() + i, segments.begin() + i - 1);
+			i++;
+		}
+		return i - 1;
+	}
+	recalculateMaxTimes(totalLifespan);
+	return segmentIndex;
+}
+
+std::pair<float, std::shared_ptr<TFV>> PiecewiseTFV::getSegment(int index) {
+	return segments[index];
+}
+
+int PiecewiseTFV::getSegmentsCount() {
+	return segments.size();
+}
+
+void PiecewiseTFV::setMaxTime(float maxTime) {
+	this->maxTime = maxTime;
+	recalculateMaxTimes(maxTime);
+}
+
+void PiecewiseTFV::recalculateMaxTimes(float totalLifespan) {
+	int index = 0;
+	for (int i = 0; i < segments.size(); i++) {
+		auto segment = segments[i];
+
+		float nextTime = totalLifespan;
+		if (i + 1 < segments.size()) {
+			nextTime = segments[i + 1].first;
+		}
+
+		segment.second->setMaxTime(nextTime - segment.first);
+		index++;
+	}
+}
+
+>>>>>>> Stashed changes
 
 std::shared_ptr<TFV> TFVFactory::create(std::string formattedString) {
 	auto name = split(formattedString, DELIMITER)[0];
