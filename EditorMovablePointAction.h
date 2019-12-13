@@ -22,14 +22,11 @@ Angle in radians to some position.
 class EMPAAngleOffset : public TextMarshallable {
 public:
 	inline EMPAAngleOffset() {}
-	virtual std::shared_ptr<EMPAAngleOffset> clone() = 0;
 
-	virtual std::string format() const = 0;
+	virtual std::string format() = 0;
 	virtual void load(std::string formattedString) = 0;
 
 	virtual float evaluate(const entt::DefaultRegistry& registry, float xFrom, float yFrom) = 0;
-	// Same as the other evaluate, but for when only the player's position is known
-	virtual float evaluate(float xFrom, float yFrom, float playerX, float playerY) = 0;
 };
 
 /*
@@ -38,14 +35,12 @@ Angle in radians to the player.
 class EMPAAngleOffsetToPlayer : public EMPAAngleOffset {
 public:
 	inline EMPAAngleOffsetToPlayer(float xOffset = 0, float yOffset = 0) : xOffset(xOffset), yOffset(yOffset) {}
-	std::shared_ptr<EMPAAngleOffset> clone() override;
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
 
 	// Returns the angle in radians from coordinates (xFrom, yFrom) to the player plus the player offset (player.x + xOffset, player.y + yOffset)
 	float evaluate(const entt::DefaultRegistry& registry, float xFrom, float yFrom) override;
-	float evaluate(float xFrom, float yFrom, float playerX, float playerY) override;
 
 private:
 	float xOffset = 0;
@@ -59,14 +54,12 @@ class EMPAAngleOffsetToGlobalPosition : public EMPAAngleOffset {
 public:
 	inline EMPAAngleOffsetToGlobalPosition() {}
 	inline EMPAAngleOffsetToGlobalPosition(float x, float y) : x(x), y(y) {}
-	std::shared_ptr<EMPAAngleOffset> clone() override;
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
 
 	// Returns the angle in radians from coordinates (xFrom, yFrom) to the global position (x, y)
 	float evaluate(const entt::DefaultRegistry& registry, float xFrom, float yFrom) override;
-	float evaluate(float xFrom, float yFrom, float playerX, float playerY) override;
 
 private:
 	float x;
@@ -79,14 +72,12 @@ Angle offset that always returns 0.
 class EMPAAngleOffsetZero : public EMPAAngleOffset {
 public:
 	inline EMPAAngleOffsetZero() {}
-	std::shared_ptr<EMPAAngleOffset> clone() override;
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
 
 	// Returns 0
 	inline float evaluate(const entt::DefaultRegistry& registry, float xFrom, float yFrom) override { return 0; }
-	inline float evaluate(float xFrom, float yFrom, float playerX, float playerY) override { return 0; }
 };
 
 /*
@@ -95,13 +86,15 @@ Angle offset that always returns the angle that the player's sprite is facing.
 class EMPAngleOffsetPlayerSpriteAngle : public EMPAAngleOffset {
 public:
 	inline EMPAngleOffsetPlayerSpriteAngle() {}
-	std::shared_ptr<EMPAAngleOffset> clone() override;
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
 
 	float evaluate(const entt::DefaultRegistry& registry, float xFrom, float yFrom) override;
-	float evaluate(float xFrom, float yFrom, float playerX, float playerY) override;
+
+private:
+	float x;
+	float y;
 };
 
 class EMPAngleOffsetFactory {
@@ -116,7 +109,7 @@ EMPA for short.
 */
 class EMPAction : public TextMarshallable {
 public:
-	virtual std::string format() const = 0;
+	virtual std::string format() = 0;
 	virtual void load(std::string formattedString) = 0;
 	// Time for the action to be completed
 	virtual float getTime() = 0;
@@ -127,17 +120,11 @@ public:
 	virtual std::string getGuiFormat() = 0;
 
 	/*
-	Generates a new MP from this EMPA and then changes the entity's reference entity to reflect the new MP.
+	Generates a new MP from this EMPA.
 
 	timeLag - the time elapsed since the generation was supposed to happen
 	*/
 	virtual std::shared_ptr<MovablePoint> execute(EntityCreationQueue& queue, entt::DefaultRegistry& registry, uint32_t entity, float timeLag) = 0;
-	/*
-	Same thing as execute(), but no reference entity is created.
-
-	x, y - the current position of whatever is going to use this MP
-	*/
-	virtual std::shared_ptr<MovablePoint> generateStandaloneMP(float x, float y, float playerX, float playerY) = 0;
 };
 
 /*
@@ -150,7 +137,7 @@ class DetachFromParentEMPA : public EMPAction {
 public:
 	inline DetachFromParentEMPA() {}
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
 	inline float getTime() override { return 0; }
 	std::string getGuiFormat() override;
@@ -158,7 +145,6 @@ public:
 	inline void setTime(float duration) override {}
 
 	std::shared_ptr<MovablePoint> execute(EntityCreationQueue& queue, entt::DefaultRegistry& registry, uint32_t entity, float timeLag) override;
-	std::shared_ptr<MovablePoint> generateStandaloneMP(float x, float y, float playerX, float playerY) override;
 };
 
 /*
@@ -169,7 +155,7 @@ public:
 	inline StayStillAtLastPositionEMPA() {}
 	inline StayStillAtLastPositionEMPA(float duration) : duration(duration) {}
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
 	inline float getTime() override { return duration; }
 	std::string getGuiFormat() override;
@@ -177,7 +163,6 @@ public:
 	inline void setTime(float duration) override { this->duration = duration; }
 
 	std::shared_ptr<MovablePoint> execute(EntityCreationQueue& queue, entt::DefaultRegistry& registry, uint32_t entity, float timeLag) override;
-	std::shared_ptr<MovablePoint> generateStandaloneMP(float x, float y, float playerX, float playerY) override;
 
 private:
 	float duration = 0;
@@ -192,19 +177,18 @@ public:
 	inline MoveCustomPolarEMPA(std::shared_ptr<TFV> distance, std::shared_ptr<TFV> angle, float time) : distance(distance), angle(angle), time(time) {}
 	inline MoveCustomPolarEMPA(std::shared_ptr<TFV> distance, std::shared_ptr<TFV> angle, float time, std::shared_ptr<EMPAAngleOffset> angleOffset) : distance(distance), angle(angle), time(time), angleOffset(angleOffset) {}
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
+	inline float getTime() override { return time; }
 	std::string getGuiFormat() override;
 	inline std::shared_ptr<TFV> getDistance() { return distance; }
 	inline std::shared_ptr<TFV> getAngle() { return angle; }
 
-	inline float getTime() override { return time; }
 	inline void setTime(float duration) override { this->time = duration; }
 	inline void setDistance(std::shared_ptr<TFV> distance) { this->distance = distance; }
 	inline void setAngle(std::shared_ptr<TFV> angle) { this->angle = angle; }
 
 	std::shared_ptr<MovablePoint> execute(EntityCreationQueue& queue, entt::DefaultRegistry& registry, uint32_t entity, float timeLag) override;
-	std::shared_ptr<MovablePoint> generateStandaloneMP(float x, float y, float playerX, float playerY) override;
 
 private:
 	std::shared_ptr<TFV> distance;
@@ -230,7 +214,7 @@ public:
 		setUnrotatedControlPoints(unrotatedControlPoints);
 	}
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
 	inline float getTime() override { return time; }
 	std::string getGuiFormat() override;
@@ -243,7 +227,6 @@ public:
 	const std::vector<sf::Vector2f> getUnrotatedControlPoints() { return unrotatedControlPoints; }
 
 	std::shared_ptr<MovablePoint> execute(EntityCreationQueue& queue, entt::DefaultRegistry& registry, uint32_t entity, float timeLag) override;
-	std::shared_ptr<MovablePoint> generateStandaloneMP(float x, float y, float playerX, float playerY) override;
 
 private:
 	// The first control point must be at (0, 0)
@@ -267,19 +250,14 @@ public:
 	*/
 	inline MovePlayerHomingEMPA(std::shared_ptr<TFV> homingStrength, std::shared_ptr<TFV> speed, float time) : homingStrength(homingStrength), speed(speed), time(time) {}
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
+	inline float getTime() override { return time; }
 	std::string getGuiFormat() override;
 
-	std::shared_ptr<MovablePoint> execute(EntityCreationQueue& queue, entt::DefaultRegistry& registry, uint32_t entity, float timeLag) override;
-	std::shared_ptr<MovablePoint> generateStandaloneMP(float x, float y, float playerX, float playerY) override;
+	inline void setTime(float duration) override { this->time = duration; }
 
-	inline void setHomingStrength(std::shared_ptr<TFV> homingStrength) { this->homingStrength = homingStrength; }
-	inline void setSpeed(std::shared_ptr<TFV> speed) { this->speed = speed; }
-	inline void setTime(float time) override { this->time = time; }
-	inline std::shared_ptr<TFV> getHomingStrength() { return homingStrength; }
-	inline std::shared_ptr<TFV> getSpeed() { return speed; }
-	inline float getTime() override { return time; }
+	std::shared_ptr<MovablePoint> execute(EntityCreationQueue& queue, entt::DefaultRegistry& registry, uint32_t entity, float timeLag) override;
 
 private:
 	// In range (0, 1]

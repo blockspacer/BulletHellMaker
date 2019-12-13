@@ -27,17 +27,13 @@ public:
 	inline EMPSpawnType() {}
 	inline EMPSpawnType(float time, float x, float y) : time(time), x(x), y(y) {}
 
-	std::string format() const = 0;
+	std::string format() = 0;
 	void load(std::string formattedString) = 0;
 
 	/*
 	entity - the entity spawning the EMP
 	*/
 	virtual MPSpawnInformation getSpawnInfo(entt::DefaultRegistry& registry, uint32_t entity, float timeLag) = 0;
-	/*
-	Same as getSpawnInfo(), but useReferenceEntity in the returned MPSpawnInformation will always be false
-	*/
-	virtual MPSpawnInformation getForcedDetachmentSpawnInfo(entt::DefaultRegistry& registry, float timeLag) = 0;
 	inline float getTime() const { return time; }
 	inline float getX() const { return x; }
 	inline float getY() const { return y; }
@@ -64,11 +60,10 @@ public:
 	inline SpecificGlobalEMPSpawn() {}
 	inline SpecificGlobalEMPSpawn(float time, float x, float y) : EMPSpawnType(time, x, y) {}
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
 
 	MPSpawnInformation getSpawnInfo(entt::DefaultRegistry& registry, uint32_t entity, float timeLag) override;
-	MPSpawnInformation getForcedDetachmentSpawnInfo(entt::DefaultRegistry& registry, float timeLag) override;
 };
 
 /*
@@ -79,14 +74,13 @@ public:
 	inline EntityRelativeEMPSpawn() {}
 	inline EntityRelativeEMPSpawn(float time, float x, float y) : EMPSpawnType(time, x, y) {}
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
 
 	/*
 	entity - the entity that is being used as the reference
 	*/
 	MPSpawnInformation getSpawnInfo(entt::DefaultRegistry& registry, uint32_t entity, float timeLag) override;
-	MPSpawnInformation getForcedDetachmentSpawnInfo(entt::DefaultRegistry& registry, float timeLag) override;
 };
 
 /*
@@ -98,14 +92,13 @@ public:
 	inline EntityAttachedEMPSpawn() {}
 	inline EntityAttachedEMPSpawn(float time, float x, float y) : EMPSpawnType(time, x, y) {}
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
 
 	/*
 	entity - the entity that the spawned EMP will be attached to
 	*/
 	MPSpawnInformation getSpawnInfo(entt::DefaultRegistry& registry, uint32_t entity, float timeLag) override;
-	MPSpawnInformation getForcedDetachmentSpawnInfo(entt::DefaultRegistry& registry, float timeLag) override;
 };
 
 class EMPSpawnTypeFactory {

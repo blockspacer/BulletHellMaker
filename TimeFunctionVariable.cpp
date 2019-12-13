@@ -1,10 +1,6 @@
 #include "TimeFunctionVariable.h"
 
-std::shared_ptr<TFV> ConstantTFV::clone() {
-	return std::make_shared<ConstantTFV>(value);
-}
-
-std::string ConstantTFV::format() const {
+std::string ConstantTFV::format() {
 	return "ConstantTFV" + tm_delim + tos(value);
 }
 
@@ -13,11 +9,7 @@ void ConstantTFV::load(std::string formattedString) {
 	value = std::stof(items[1]);
 }
 
-std::shared_ptr<TFV> LinearTFV::clone() {
-	return std::make_shared<LinearTFV>(startValue, endValue, maxTime);
-}
-
-std::string LinearTFV::format() const {
+std::string LinearTFV::format() {
 	return "LinearTFV" + tm_delim + tos(startValue) + tm_delim + tos(endValue) + tm_delim + tos(maxTime);
 }
 
@@ -28,11 +20,7 @@ void LinearTFV::load(std::string formattedString) {
 	maxTime = std::stof(items[3]);
 }
 
-std::shared_ptr<TFV> SineWaveTFV::clone() {
-	return std::make_shared<SineWaveTFV>(period, amplitude, valueShift, phaseShift);
-}
-
-std::string SineWaveTFV::format() const {
+std::string SineWaveTFV::format() {
 	return "SineWaveTFV" + tm_delim + tos(period) + tm_delim + tos(amplitude) + tm_delim + tos(valueShift) + tm_delim + tos(phaseShift);
 }
 
@@ -44,11 +32,7 @@ void SineWaveTFV::load(std::string formattedString) {
 	phaseShift = std::stof(items[4]);
 }
 
-std::shared_ptr<TFV> ConstantAccelerationDistanceTFV::clone() {
-	return std::make_shared<ConstantAccelerationDistanceTFV>(initialDistance, initialVelocity, acceleration);
-}
-
-std::string ConstantAccelerationDistanceTFV::format() const {
+std::string ConstantAccelerationDistanceTFV::format() {
 	return "ConstantAccelerationDistanceTFV" + tm_delim + tos(initialDistance) + tm_delim + tos(initialVelocity) + tm_delim + tos(acceleration);
 }
 
@@ -59,13 +43,7 @@ void ConstantAccelerationDistanceTFV::load(std::string formattedString) {
 	acceleration = std::stof(items[3]);
 }
 
-std::shared_ptr<TFV> DampenedStartTFV::clone() {
-	std::shared_ptr<TFV> copy = std::make_shared<DampenedStartTFV>();
-	copy->load(format());
-	return copy;
-}
-
-std::string DampenedStartTFV::format() const {
+std::string DampenedStartTFV::format() {
 	return "DampenedStartTFV" + tm_delim + tos(a) + tm_delim + tos(startValue) + tm_delim + tos(dampeningFactor);
 }
 
@@ -76,13 +54,7 @@ void DampenedStartTFV::load(std::string formattedString) {
 	dampeningFactor = std::stoi(items[3]);
 }
 
-std::shared_ptr<TFV> DampenedEndTFV::clone() {
-	std::shared_ptr<TFV> copy = std::make_shared<DampenedEndTFV>();
-	copy->load(format());
-	return copy;
-}
-
-std::string DampenedEndTFV::format() const {
+std::string DampenedEndTFV::format() {
 	return "DampenedEndTFV" + tm_delim + tos(a) + tm_delim + tos(endValue) + tm_delim + tos(maxTime) + tm_delim + tos(dampeningFactor);
 }
 
@@ -94,11 +66,7 @@ void DampenedEndTFV::load(std::string formattedString) {
 	dampeningFactor = std::stoi(items[4]);
 }
 
-std::shared_ptr<TFV> DoubleDampenedTFV::clone() {
-	return std::make_shared<DoubleDampenedTFV>(startValue, endValue, maxTime, dampeningFactor);
-}
-
-std::string DoubleDampenedTFV::format() const {
+std::string DoubleDampenedTFV::format() {
 	return "DoubleDampenedTFV" + tm_delim + tos(a) + tm_delim + tos(startValue) + tm_delim + tos(endValue) + tm_delim + tos(maxTime) + tm_delim + tos(dampeningFactor);
 }
 
@@ -111,13 +79,7 @@ void DoubleDampenedTFV::load(std::string formattedString) {
 	dampeningFactor = std::stoi(items[5]);
 }
 
-std::shared_ptr<TFV> TranslationWrapperTFV::clone() {
-	std::shared_ptr<TFV> copy = std::make_shared<TranslationWrapperTFV>();
-	copy->load(format());
-	return copy;
-}
-
-std::string TranslationWrapperTFV::format() const {
+std::string TranslationWrapperTFV::format() {
 	return "TranslationWrapperTFV" + tm_delim + tos(valueTranslation) + tm_delim + "(" + wrappedTFV->format() + ")";
 }
 
@@ -127,28 +89,24 @@ void TranslationWrapperTFV::load(std::string formattedString) {
 	wrappedTFV = TFVFactory::create(items[2]);
 }
 
-std::shared_ptr<TFV> PiecewiseTFV::clone() {
-	std::shared_ptr<TFV> copy = std::make_shared<PiecewiseTFV>();
-	copy->load(format());
-	return copy;
-}
-
-std::string PiecewiseTFV::format() const {
+std::string PiecewiseContinuousTFV::format() {
 	std::string ret = "";
-	ret += "PiecewiseTFV";
+	ret += "PiecewiseContinuousTFV";
 	for (auto segment : segments) {
 		ret += tm_delim + tos(segment.first) + tm_delim + "(" + segment.second->format() + ")";
 	}
 	return ret;
 }
 
-void PiecewiseTFV::load(std::string formattedString) {
+void PiecewiseContinuousTFV::load(std::string formattedString) {
 	auto items = split(formattedString, DELIMITER);
 	for (int i = 1; i < items.size(); i += 2) {
 		segments.push_back(std::make_pair(std::stof(items[i]), TFVFactory::create(items[i + 1])));
 	}
 }
 
+<<<<<<< Updated upstream
+=======
 float PiecewiseTFV::evaluate(float time) {
 	int l = 0;
 	int h = segments.size(); // Not n - 1
@@ -308,6 +266,8 @@ void PiecewiseTFV::recalculateMaxTimes(float totalLifespan) {
 	}
 }
 
+>>>>>>> Stashed changes
+
 std::shared_ptr<TFV> TFVFactory::create(std::string formattedString) {
 	auto name = split(formattedString, DELIMITER)[0];
 	std::shared_ptr<TFV> ptr;
@@ -335,13 +295,9 @@ std::shared_ptr<TFV> TFVFactory::create(std::string formattedString) {
 	else if (name == "TranslationWrapperTFV") {
 		ptr = std::make_shared<TranslationWrapperTFV>();
 	}
-	else if (name == "PiecewiseTFV") {
-		ptr = std::make_shared<PiecewiseTFV>();
+	else if (name == "PiecewiseContinuousTFV") {
+		ptr = std::make_shared<PiecewiseContinuousTFV>();
 	}
 	ptr->load(formattedString);
 	return std::move(ptr);
-}
-
-std::shared_ptr<TFV> CurrentAngleTFV::clone() {
-	return std::make_shared<CurrentAngleTFV>(registry, from, to);
 }

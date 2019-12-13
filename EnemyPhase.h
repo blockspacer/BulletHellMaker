@@ -9,8 +9,6 @@
 #include "AudioPlayer.h"
 #include "AttackPattern.h"
 
-class LevelPack;
-
 /*
 An enemy phase consists of a list of attack patterns and at what time each begins.
 */
@@ -19,28 +17,30 @@ public:
 	inline EditorEnemyPhase() {}
 	inline EditorEnemyPhase(int id) : id(id) {}
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
 
-	bool legal(std::string& message)const;
+	bool legal(std::string& message);
 
 	inline void setAttackPatternLoopDelay(float attackPatternLoopDelay) { this->attackPatternLoopDelay = attackPatternLoopDelay; }
 	inline void setPhaseBeginAction(std::shared_ptr<EnemyPhaseAction> phaseBeginAction) { this->phaseBeginAction = phaseBeginAction; }
 	inline void setPhaseEndAction(std::shared_ptr<EnemyPhaseAction> phaseEndAction) { this->phaseEndAction = phaseEndAction; }
 	inline void setPlayMusic(bool playMusic) { this->playMusic = playMusic; }
 
-	inline int getID() const { return id; }
-	/*
-	Returns a pair: the amount of time after the start of this phase that the attack pattern at the given index will begin, and the id of that attack pattern.
-	Note that there is no upper bound on index, since attack patterns can loop, so this function takes that into account.
-	*/
-	std::pair<float, int> getAttackPatternData(const LevelPack& levelPack, int index) const;
-	inline int getAttackPatternsCount() const { return attackPatternIds.size(); }
-	inline std::shared_ptr<EnemyPhaseAction> getPhaseBeginAction() const { return phaseBeginAction; }
-	inline std::shared_ptr<EnemyPhaseAction> getPhaseEndAction() const { return phaseEndAction; }
-	inline float getAttackPatternLoopDelay() const { return attackPatternLoopDelay; }
-	inline bool getPlayMusic() const { return playMusic; }
-	inline std::string getName() const { return name; }
+	inline int getID() { return id; }
+	inline std::pair<float, int> getAttackPatternData(int index) { 
+		int size = attackPatternIds.size();
+		auto item = attackPatternIds[index % size];
+		// Increase time of the attack pattern at some index by the loop count multiplied by total time for all attack patterns to execute
+		item.first += (attackPatternIds[size - 1].first + attackPatternLoopDelay) * (int)(index/size);
+		return item;
+	}
+	inline int getAttackPatternsCount() { return attackPatternIds.size(); }
+	inline std::shared_ptr<EnemyPhaseAction> getPhaseBeginAction() { return phaseBeginAction; }
+	inline std::shared_ptr<EnemyPhaseAction> getPhaseEndAction() { return phaseEndAction; }
+	inline float getAttackPatternLoopDelay() { return attackPatternLoopDelay; }
+	inline bool getPlayMusic() { return playMusic; }
+	inline std::string getName() { return name; }
 	/*
 	Returns a reference to the music settings.
 	*/
@@ -56,7 +56,7 @@ private:
 	// Attack pattern ids (int) and when they occur, with t=0 being the start of the phase
 	// Sorted ascending by time
 	std::vector<std::pair<float, int>> attackPatternIds;
-	// The amount of time to wait after the last attack pattern finishes (all actions have been executed and finished) before restarting the attack pattern loop
+	// The amount of time to wait before restarting the attack pattern loop
 	float attackPatternLoopDelay = 0;
 
 	// The EnemyPhaseAction that is executed right when this phase begins

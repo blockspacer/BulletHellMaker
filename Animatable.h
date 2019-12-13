@@ -21,7 +21,7 @@ public:
 		return !(*this == other);
 	}
 
-	std::string format() const override;
+	std::string format() override;
 	void load(std::string formattedString) override;
 
 	inline std::string getAnimatableName() { return animatableName; }

@@ -1,11 +1,11 @@
 #include "EnemyPhaseAction.h"
 #include "Components.h"
 
-std::string NullEPA::format() const {
+std::string NullEPA::format() {
 	return "NullEPA";
 }
 
-std::string DespawnEPA::format() const {
+std::string DespawnEPA::format() {
 	return "DespawnEPA";
 }
 
@@ -20,7 +20,7 @@ void DespawnEPA::execute(entt::DefaultRegistry & registry, uint32_t entity) {
 	}
 }
 
-std::string DestroyEnemyBulletsEPA::format() const {
+std::string DestroyEnemyBulletsEPA::format() {
 	return "DestroyEnemyBulletsEPA";
 }
 

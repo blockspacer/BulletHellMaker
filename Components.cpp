@@ -19,11 +19,6 @@
 // Used to account for float inaccuracies
 const float sigma = 0.00001f;
 
-MovementPathComponent::MovementPathComponent(EntityCreationQueue & queue, uint32_t self, entt::DefaultRegistry & registry, uint32_t entity, MPSpawnInformation spawnInfo, std::vector<std::shared_ptr<EMPAction>> actions, float initialTime) : actions(actions), time(initialTime) {
-	initialSpawn(registry, entity, spawnInfo, actions);
-	update(queue, registry, self, registry.get<PositionComponent>(self), 0);
-}
-
 void MovementPathComponent::update(EntityCreationQueue& queue, entt::DefaultRegistry& registry, uint32_t entity, PositionComponent& entityPosition, float deltaTime) {
 	time += deltaTime;
 	// While loop for actions with lifespan of 0 like DetachFromParent 
@@ -41,22 +36,11 @@ void MovementPathComponent::update(EntityCreationQueue& queue, entt::DefaultRegi
 		path = actions[currentActionsIndex]->execute(queue, registry, entity, time);
 		currentActionsIndex++;
 	}
-	if (time <= path->getLifespan()) {
-		if (useReferenceEntity) {
-			auto& pos = registry.get<PositionComponent>(referenceEntity);
-			entityPosition.setPosition(path->compute(sf::Vector2f(pos.getX(), pos.getY()), time));
-		} else {
-			entityPosition.setPosition(path->compute(sf::Vector2f(0, 0), time));
-		}
+	if (useReferenceEntity) {
+		auto& pos = registry.get<PositionComponent>(referenceEntity);
+		entityPosition.setPosition(path->compute(sf::Vector2f(pos.getX(), pos.getY()), time));
 	} else {
-		// The path's lifespan has been exceeded and there are no more paths to execute, so just stay at the last position on the path, relative to the reference entity
-
-		if (useReferenceEntity) {
-			auto& pos = registry.get<PositionComponent>(referenceEntity);
-			entityPosition.setPosition(path->compute(sf::Vector2f(pos.getX(), pos.getY()), path->getLifespan()));
-		} else {
-			entityPosition.setPosition(path->compute(sf::Vector2f(0, 0), path->getLifespan()));
-		}
+		entityPosition.setPosition(path->compute(sf::Vector2f(0, 0), time));
 	}
 }
 
@@ -126,13 +110,6 @@ void MovementPathComponent::initialSpawn(entt::DefaultRegistry& registry, uint32
 	path = std::make_shared<StationaryMP>(spawnInfo.position, 0);
 }
 
-void MovementPathComponent::initialSpawn(entt::DefaultRegistry & registry, uint32_t entity, MPSpawnInformation spawnInfo, std::vector<std::shared_ptr<EMPAction>>& actions) {
-	useReferenceEntity = spawnInfo.useReferenceEntity;
-	referenceEntity = spawnInfo.referenceEntity;
-
-	path = std::make_shared<StationaryMP>(spawnInfo.position, 0);
-}
-
 EnemyComponent::EnemyComponent(std::shared_ptr<EditorEnemy> enemyData, EnemySpawnInfo spawnInfo, int enemyID) : enemyData(enemyData), spawnInfo(spawnInfo), enemyID(enemyID) {}
 
 void EnemyComponent::update(EntityCreationQueue& queue, SpriteLoader& spriteLoader, const LevelPack& levelPack, entt::DefaultRegistry& registry, uint32_t entity, float deltaTime) {
@@ -180,17 +157,6 @@ void EnemyComponent::checkPhases(EntityCreationQueue& queue, SpriteLoader& sprit
 			currentPhase = levelPack.getEnemyPhase(std::get<1>(nextPhaseData));
 			currentAttackPattern = nullptr;
 
-			// Do not loop through attack patterns while in this current phase if no attack pattern in this phase takes longer than 0 secoonds
-			// to execute, to prevent an infinite loop in checkAttackPatterns()
-			// Loop to (currentPhase->getAttackPatternsCount() * 2) to check for any loop delays as well
-			checkNextAttackPattern = false;
-			for (int i = 0; i < currentPhase->getAttackPatternsCount() * 2; i++) {
-				if (currentPhase->getAttackPatternData(levelPack, i).first > 0) {
-					checkNextAttackPattern = true;
-					break;
-				}
-			}
-
 			// Send phase change signal
 			if (enemyPhaseChangeSignal) {
 				if (currentPhaseIndex == 0) {
@@ -230,8 +196,8 @@ void EnemyComponent::checkPhases(EntityCreationQueue& queue, SpriteLoader& sprit
 
 void EnemyComponent::checkAttackPatterns(EntityCreationQueue& queue, SpriteLoader& spriteLoader, const LevelPack& levelPack, entt::DefaultRegistry& registry, uint32_t entity) {
 	// Attack patterns loop, so entity can always continue to the next attack pattern
-	while (currentPhase && checkNextAttackPattern) {
-		auto nextAttackPattern = currentPhase->getAttackPatternData(levelPack, currentAttackPatternIndex + 1);
+	while (currentPhase) {
+		auto nextAttackPattern = currentPhase->getAttackPatternData(currentAttackPatternIndex + 1);
 		// Check if condition for next attack pattern is satisfied
 		if (timeSincePhase >= nextAttackPattern.first) {
 			timeSinceAttackPattern = timeSincePhase - nextAttackPattern.first;
@@ -331,21 +297,12 @@ void SpriteComponent::update(float deltaTime) {
 }
 
 EMPSpawnerComponent::EMPSpawnerComponent(std::vector<std::shared_ptr<EditorMovablePoint>> emps, uint32_t parent, int attackID, int attackPatternID, int enemyID, int enemyPhaseID, bool playAttackAnimation) : parent(parent), attackID(attackID), attackPatternID(attackPatternID), enemyID(enemyID), enemyPhaseID(enemyPhaseID), playAttackAnimation(playAttackAnimation), isEnemyBulletSpawner(true) {
-	spawnedBulletType = 0;
-	for (auto emp : emps) {
-		this->emps.push(emp);
-	}
-}
-
-EMPSpawnerComponent::EMPSpawnerComponent(std::vector<std::shared_ptr<EditorMovablePoint>> emps, uint32_t parent, int attackID, int attackPatternID) {
-	spawnedBulletType = 1;
 	for (auto emp : emps) {
 		this->emps.push(emp);
 	}
 }
 
 EMPSpawnerComponent::EMPSpawnerComponent(std::vector<std::shared_ptr<EditorMovablePoint>> emps, uint32_t parent, int attackID, int attackPatternID, bool playAttackAnimation) : parent(parent), attackID(attackID), attackPatternID(attackPatternID), playAttackAnimation(playAttackAnimation), isEnemyBulletSpawner(false) {
-	spawnedBulletType = 2;
 	for (auto emp : emps) {
 		this->emps.push(emp);
 	}
@@ -354,7 +311,7 @@ EMPSpawnerComponent::EMPSpawnerComponent(std::vector<std::shared_ptr<EditorMovab
 void EMPSpawnerComponent::update(entt::DefaultRegistry& registry, SpriteLoader& spriteLoader, EntityCreationQueue& queue, float deltaTime) {
 	time += deltaTime;
 
-	if (spawnedBulletType == 0) {
+	if (isEnemyBulletSpawner) {
 		while (!emps.empty()) {
 			float t = emps.front()->getSpawnType()->getTime();
 			if (time >= t) {
@@ -364,21 +321,11 @@ void EMPSpawnerComponent::update(entt::DefaultRegistry& registry, SpriteLoader& 
 				break;
 			}
 		}
-	} else if (spawnedBulletType == 2) {
-		while (!emps.empty()) {
-			float t = emps.front()->getSpawnType()->getTime();
-			if (time >= t) {
-				queue.pushBack(std::make_unique<EMPSpawnFromPlayerCommand>(registry, spriteLoader, emps.front(), false, parent, time - t, attackID, attackPatternID, playAttackAnimation));
-				emps.pop();
-			} else {
-				break;
-			}
-		}
 	} else {
 		while (!emps.empty()) {
 			float t = emps.front()->getSpawnType()->getTime();
 			if (time >= t) {
-				queue.pushBack(std::make_unique<EMPSpawnFromNothingCommand>(registry, spriteLoader, emps.front(), false, time - t, attackID, attackPatternID));
+				queue.pushBack(std::make_unique<EMPSpawnFromPlayerCommand>(registry, spriteLoader, emps.front(), false, parent, time - t, attackID, attackPatternID, playAttackAnimation));
 				emps.pop();
 			} else {
 				break;
@@ -621,7 +568,7 @@ std::shared_ptr<entt::SigH<void(int)>> PlayerTag::getBombCountChangeSignal() {
 void CollectibleComponent::activate(EntityCreationQueue& queue, entt::DefaultRegistry& registry, uint32_t self) {
 	// Item is activated, so begin moving towards the player
 
-	auto speed = std::make_shared<PiecewiseTFV>();
+	auto speed = std::make_shared<PiecewiseContinuousTFV>();
 	// Speed starts off quickly at 450 and slows to 350 by t=2
 	speed->insertSegment(std::make_pair(0, std::make_shared<DampenedEndTFV>(450.0f, 350.0f, 2.0f, 2)));
 	// Speed then maintains a constant 350 forever

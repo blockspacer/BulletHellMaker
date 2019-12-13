@@ -15,8 +15,6 @@ Documentation to put in the editor somewhere:
 -The particle animatable in ParticleExplosionDeathAction is meant to be colored by the color field. 
  Meaning, the color specified in the Animatable's sprite sheet entry will be ignored.
 -Due to limitations with the GUI library, animations with differing sprite sizes will always scale to fit the preview
--An EditorAttackPattern "finishes" when all its EMPAs have been executed.
- Attacks that execute after the time it takes for an attack pattern to finish will not execute.
 
 Tips to put in editor somewhere:
 -For a classic bullet hell, all enemy bullets should do 1 damage
@@ -37,8 +35,6 @@ Notes for me:
 -Since HitboxComponent's update is only for updating hitbox disable time and only the player's hitbox can be disabled, only the player's hitbox is updated
  in CollisionSystem. Change to update all HitboxComponents if this changes.
 -A bullet's attack pattern id of -1 means that the bullet came from a DeathAction; for enemy bullets, an enemy phase ID of -1 also means the same thing
--Editor_______ objects returned by getters in LevelPack should never be modified without calling update______ (eg updateAttack()). I'm
- too lazy to make them return pointers to const objects so just don't modify anything when making the editors
 
 -Item path is in Components::CollectibleComponent::update and EntityCreationQueue::EMPDropItemCommand::execute
 -Player invulnerability sprite effect animation is in CollisionSystem
@@ -48,37 +44,32 @@ Notes for me:
 -TreeView default (when there are no textures) icon bounds incorrect size if setItemHeight is called after setSize
 -attack ID 13 is messed up
 
-cur todo:
--TFV editing
-	-in attackeditor: simply an "Edit TFV" button; the entire window is passed as a parameter into EditorUtilities::TFVGroup
-	 so that TFVGroup can cache all widgets and display a custom gui just for editing TFVs. Then GameplayTestWindow is turned
-	 into a custom displayingTFV mode that creates an EMP placeholder of the selectedEMP in AttackEditor and shows its path
-	-TFVGroup's custom gui (by this i refer to the set of widgets that will be on screen) will have a graph of value over time
-	 and other widgets to edit values
-		-GameplayTestWindow cannot go into editingTFV mode if it is in editingBezierCP mode
-		
-	-AttackEditor presses button to begin editing a TFV -> TFVGroup's beginEditing() is called -> 
-	 TFVGroup creates
-	 local UndoableEditorWindow and gives it focus and adds all its widgets to there -> when UndoableEditorWindow is closed or finish
-	 editing button located in UndoableEditorWindow is called, TFVGroup calls the TFVGroup's endEditing() -> 
-	 TFVGroup emits an onEditingEnd signal and clears its undoStack ->
-	 AttackEditor catches onEditingEnd signal and adds to its undoStack a copy of its existing TFV and then replaces it with the 
-	 new TFV emitted in onEditingEnd
-	 
-	-Close TFVEditorWindow -> hide it instead of closing somehow and then send a signal saying it was hidden away so that AttackEditor
-	 can call onTFVEditingEnd(); (look at how gameplaytestwindow's close signal in AttackEditor causes bezier stuff to close)
-
 big todo:
--change lifespan of empa -> linearly scale segments' start times to be same % of lifespan; store % of original for each segment
- so that float imprecisions don't ruin the start times as piecewisetfv maxtime keeps changing
--piecewise tfv name displayed as name of first segment if only one segment
--disable keyboard commands when screen is blocked (ibPanel is visible) in AttackEditor
--disable keyboard commands when confirmation prompt is up in UndoableEditorWindow
--Remove start test button when editing CPs
--An EditorAttackPattern "finishes" when all its EMPAs have been executed (actionsTotalTime seconds after the start of the attack pattern).
- Attacks that execute more than [actionsTotalTime] seconds after the start of the attack pattern will not execute.
-	-so, in attack pattern editor, make names of all attacks that execute after [actionsTotalTime] have a red name
+-HUGE BUG: when gameplay test in progress, changes made to the level pack can blow up the test
+	solution: maybe make a copy of the level pack and send it to all _____Systems when gameplay test begins;
+		when gameplay test ends, the OG level pack is used again
+-make "start test" do something when editing CPs
+-visualize movement path when editing bezier control points (implement visualizer for EMP in a general way such that it can easily be applied to just a single EMPA; then
+	create a temp bezier EMPA that contains unsaved changes that will be used solely to visualize path)
 -improve how popups in editor windows work (how right now mousepressed is the event that chooses the option)
+-gameplay window turn list boxes into scrollable ones
+-have bezier TFV support infinite control points
+-select placeholder -> color it differently
+-think about how to implement empaiBezierControlPoints
+	-edit button that sets gameplay test window into bezier edit mode:
+		0. some indicator on attack editor to let user know that everything in attack editor is disabled until
+			(panel that covers entire screen with only a Label: "Currently editing bezier control points for Attack #, EMP #, EMPA index #")
+			-> 
+		1. caches current state of all placeholders (including player) into some list of placeholders
+		2. deletes all placeholders
+		3. adds a placeholder for every control point that corresponds to that control point; selected placeholders can't have their 
+			test modes/test mode ids be changed; adding a new placeholder is equivalent to adding a new control point; running gameplay test 
+			caches then deletes all placeholders, creates a single placeholder in EMPA test mode (see below) with ID of EMPA being edited, and
+			runs gameplay test normally; when gameplay test ends, delete all placeholders and then restore the placeholders from the cache created in
+			this step
+		4. when "finish editing" button is pressed, the EMPA being edited has its control points set according to the placeholders. the cached placeholders
+			from #1 are put back, and bezier edit mode is exited; call AttackEditor::populateEmpaiBezierControlPoints(); if gameplay test is being run, end it first
+		5. also have a "discard and exit" button that does all of #4 but doesn't control points aren't set
 -add to attack editor: 
 	-test EMP button
 		-places a single placeholder in the gameplay test window in a special EMP test mode (this test mode can't be chosen by user) that tests
@@ -95,11 +86,6 @@ big todo:
  is drawn from the source; if an EMPA is selected, the dots of that particular EMPA are colored differently
 
 TODO:
--TFVGroup add/delete aren't adding to undo stack
--control+c -> see what is selected (start from the lowest: EMPA -> EMP -> Attack) -> add that thing to the clipboard
- control+v -> paste a clone of whatever is in clipboard if the above level is selected. ie if EMPA is in clipboard, 
-	paste a clone of the EMPA to the selectedEMP only if selectedEMP != nullptr. Attack is always pasteable. 
--disable undo while test is in progress in gameplay test window
 -animatables can't have backslashes in name
 -change all setposition and setsize to use "25%" or whatever
 -change size of animatablepicture to match texture's aspect ratio

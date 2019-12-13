@@ -17,7 +17,7 @@ std::shared_ptr<Item> ItemFactory::create(std::string formattedString) {
 	return ptr;
 }
 
-std::string HealthPackItem::format() const {
+std::string HealthPackItem::format() {
 	return "HealthPackItem" + tm_delim + "(" + animatable.format() + ")" + tm_delim + tos(hitboxRadius) + tm_delim + tos(activationRadius) + tm_delim + "(" + onCollectSound.format() + ")";
 }
 
@@ -34,7 +34,7 @@ void HealthPackItem::onPlayerContact(entt::DefaultRegistry & registry, uint32_t 
 	registry.get<HealthComponent>(player).heal(HEALTH_PER_HEALTH_PACK);
 }
 
-std::string PowerPackItem::format() const {
+std::string PowerPackItem::format() {
 	return "PowerPackItem" + tm_delim + "(" + animatable.format() + ")" + tm_delim + tos(hitboxRadius) + tm_delim + tos(activationRadius) + tm_delim + "(" + onCollectSound.format() + ")";
 }
 
@@ -51,7 +51,7 @@ void PowerPackItem::onPlayerContact(entt::DefaultRegistry & registry, uint32_t p
 	registry.get<PlayerTag>().increasePower(registry, player, POWER_PER_POWER_PACK);
 }
 
-std::string PointsPackItem::format() const {
+std::string PointsPackItem::format() {
 	return "PointsPackItem" + tm_delim + "(" + animatable.format() + ")" + tm_delim + tos(hitboxRadius) + tm_delim + tos(activationRadius) + tm_delim + "(" + onCollectSound.format() + ")";
 }
 
@@ -68,7 +68,7 @@ void PointsPackItem::onPlayerContact(entt::DefaultRegistry & registry, uint32_t 
 	registry.get<LevelManagerTag>().addPoints(POINTS_PER_POINTS_PACK);
 }
 
-std::string BombItem::format() const {
+std::string BombItem::format() {
 	return "BombItem" + tm_delim + "(" + animatable.format() + ")" + tm_delim + tos(hitboxRadius) + tm_delim + tos(activationRadius) + tm_delim + "(" + onCollectSound.format() + ")";
 }
 
