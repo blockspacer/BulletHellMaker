@@ -6,6 +6,7 @@
 #include "TimeFunctionVariable.h"
 #include "Constants.h"
 #include "Components.h"
+#include <boost/math/special_functions/binomial.hpp>
 
 /*
 A point that can move.
@@ -161,10 +162,7 @@ public:
 	/*
 	angle - in radians
 	*/
-	inline BezierMP(float lifespan, std::vector<sf::Vector2f> controlPoints) : MovablePoint(lifespan, false), controlPoints(controlPoints), numControlPoints(controlPoints.size()) {
-		assert(controlPoints.size() <= 4 && "Maximum number of control points in a Bezier curve limited to 4 because of the computational power required for each evaluation.");
-		assert(controlPoints.size() != 1 && "Number of control points must be greater than 1");
-	}
+	inline BezierMP(float lifespan, std::vector<sf::Vector2f> controlPoints) : MovablePoint(lifespan, false), controlPoints(controlPoints), numControlPoints(controlPoints.size()) {}
 
 private:
 	const std::vector<sf::Vector2f> controlPoints;
@@ -179,9 +177,15 @@ private:
 		} else if (numControlPoints == 3) {
 			float a = 1 - time;
 			return a*a*controlPoints[0] + 2.0f*a*time*controlPoints[1] + time*time*controlPoints[2];
-		} else {
+		} else if (numControlPoints == 4) {
 			float a = 1 - time;
 			return (a*a*a*controlPoints[0]) + (3.0f * a*a*time*controlPoints[1]) + (3.0f * a*time*time*controlPoints[2]) + (time*time*time*controlPoints[3]);
+		} else {
+			sf::Vector2f sum(0, 0);
+			for (int i = 0; i < numControlPoints; i++) {
+				sum += boost::math::binomial_coefficient<float>(numControlPoints - 1, i) * std::pow(1.0f - time, numControlPoints - 1 - i) * std::pow(time, i) * controlPoints[i];
+			}
+			return sum;
 		}
 	}
 };
@@ -200,6 +204,14 @@ public:
 	*/
 	inline HomingMP(float lifespan, std::shared_ptr<TFV> speed, std::shared_ptr<TFV> homingStrength, uint32_t from, uint32_t to, entt::DefaultRegistry& registry) : MovablePoint(lifespan, true), speed(speed), homingStrength(homingStrength), registry(registry), from(from) {
 		angle = std::make_shared<CurrentAngleTFV>(registry, from, to);
+		prevAngle = angle->evaluate(0);
+	}
+	/*
+	HomingMP that homes in on a static position.
+	If a HomingMP is initialized with this constructor, evaluate() should never be called.
+	*/
+	inline HomingMP(float lifespan, std::shared_ptr<TFV> speed, std::shared_ptr<TFV> homingStrength, float fromX, float fromY, float toX, float toY) : MovablePoint(lifespan, true), speed(speed), homingStrength(homingStrength), registry(registry) {
+		angle = std::make_shared<ConstantTFV>(std::atan2(toY - fromY, toX - fromX));
 		prevAngle = angle->evaluate(0);
 	}
 

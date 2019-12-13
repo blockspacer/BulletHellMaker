@@ -1,5 +1,6 @@
 #pragma once
 #include <TGUI/TGUI.hpp>
+#include <SFML/Graphics.hpp>
 #include <string>
 #include "SpriteLoader.h"
 #include "Animatable.h"
@@ -11,15 +12,43 @@
 #include "RenderSystem.h"
 #include "Attack.h"
 #include "EditorMovablePointAction.h"
+#include "EditorMovablePoint.h"
+#include "MovablePoint.h"
 #include <memory>
+#include <thread>
+#include <mutex>
 #include <entt/entt.hpp>
 
 /*
 Sends window to the foreground of the computer display.
 */
 void sendToForeground(sf::RenderWindow& window);
+/*
+Returns a tooltip containing some text.
+*/
 std::shared_ptr<tgui::Label> createToolTip(std::string text);
+/*
+Returns a sf::VertexArray that contains the positions that an entity following the array of EMPAs will be in over time.
+Note that there must be an entity with the PlayerTag component if any of the EMPAs or their EMPAAngleOffsets require the player's position.
+The vertices linearly interpolate from startColor to endColor as the path progresses.
 
+timeResolution - the amount of time between each point
+x, y - the starting position of the returned vertex array
+playerX, playerY - position of the player
+*/
+sf::VertexArray generateVertexArray(std::vector<std::shared_ptr<EMPAction>> actions, float timeResolution, float x, float y, float playerX, float playerY, sf::Color startColor = sf::Color::Red, sf::Color endColor = sf::Color::Blue);
+sf::VertexArray generateVertexArray(std::shared_ptr<EMPAction> action, float timeResolution, float x, float y, float playerX, float playerY, sf::Color startColor = sf::Color::Red, sf::Color endColor = sf::Color::Blue);
+/*
+Returns an array of segment data. Each segment data is 2 vectors of floats in order:
+the x-coordinates and the y-coordinates of a matplotlibc curve.
+The x-axis represents time in seconds and the y-axis the TFV's value.
+
+timeResolution - the amount of time between each point
+colors - the list of colors that will be looped to determine the color of each segment of the curve
+*/
+std::vector<std::pair<std::vector<float>, std::vector<float>>> generateMPLPoints(std::shared_ptr<PiecewiseTFV> tfv, float tfvLifespan, float timeResolution);
+
+class UndoableEditorWindow;
 
 /*
 A tgui::Slider that allows for values not limited by multiples of the slider's step.
@@ -159,6 +188,7 @@ public:
 	void setPosition(float x, float y);
 	void setValue(float value);
 	void setEnabled(bool enabled);
+	void setIntegerMode(bool intMode);
 
 	inline std::shared_ptr<tgui::EditBox> getEditBox() { return editBox; }
 	inline std::shared_ptr<entt::SigH<void(float)>> getOnValueSet();
@@ -218,101 +248,6 @@ private:
 	std::shared_ptr<tgui::Label> pitchLabel;
 };
 
-/*
-Used to edit TFVs.
-Note that unlike the other widgets in EditorUtilities, TFVGroup automatically takes care of adding
-commands to the undo stack.
-This implementation of a TFV editor is pretty specific to TFVs in EditorAttacks' EMPs' EMPAs' TFVs (mainly
-because of the callback signal).
-*/
-class TFVGroup : public tgui::Group {
-public:
-	TFVGroup(UndoStack& undoStack, float paddingX = 20, float paddingY = 10);
-
-	/*
-	Should be called whenever this widget's container is resized.
-	This function automatically sets the height of this widget.
-	*/
-	void onContainerResize(int containerWidth, int containerHeight);
-
-	/*
-	Sets the TFV that this TFVGroup will be editing.
-	This particular setter is for TFVs that are part of EditorAttacks.
-	*/
-	void setTFV(std::shared_ptr<TFV> tfv, std::shared_ptr<EMPAction> parentEMPA, std::shared_ptr<EditorMovablePoint> parentEMP, std::shared_ptr<EditorAttack> parentAttack);
-	/*
-	Sets the TFV that this TFVGroup will be editing.
-	This particular setter is for TFVs that are part of EMPAs but not EditorAttacks
-	*/
-	void setTFV(std::shared_ptr<TFV> tfv, std::shared_ptr<EMPAction> parentEMPA);
-	inline std::shared_ptr<entt::SigH<void(std::shared_ptr<EMPAction>, std::shared_ptr<EditorMovablePoint>, std::shared_ptr<EditorAttack>)>> getOnAttackTFVChange() { return onAttackTFVChange; }
-	inline std::shared_ptr<entt::SigH<void(std::shared_ptr<EMPAction>)>> getOnEMPATFVChange() { return onEMPATFVChange; }
-
-private:
-	float paddingX, paddingY;
-
-	UndoStack& undoStack;
-
-	std::shared_ptr<TFV> tfv;
-	std::shared_ptr<EMPAction> parentEMPA;
-	std::shared_ptr<EditorMovablePoint> parentEMP;
-	std::shared_ptr<EditorAttack> parentAttack;
-
-	std::shared_ptr<tgui::Slider> test;
-
-	// Signal emitted AFTER a change is made to the TFV, if this TFV belongs to some EditorAttack.
-	// The EMPA parameter is the EMPA that the TFV being edited belongs to. The EMP parameter is the EMP that the EMPA belongs to.
-	// The EditorAttack parameter is the EditorAttack that the EMP belongs to.
-	std::shared_ptr<entt::SigH<void(std::shared_ptr<EMPAction>, std::shared_ptr<EditorMovablePoint>, std::shared_ptr<EditorAttack>)>> onAttackTFVChange;
-	// Same as above, but for TFVs that belong to an EMPA but not an EditorAttack.
-	std::shared_ptr<entt::SigH<void(std::shared_ptr<EMPAction>)>> onEMPATFVChange;
-
-	// This bool is used to prevent infinite loops (ie a change from an undo creating an undo command)
-	bool ignoreSignal = false;
-
-	// Should be called whenever a change is made to the TFV
-	void onTFVChange();
-};
-
-/*
-Used to edit EMPAAngleOffsets.
-Note that unlike the other widgets in EditorUtilities, TFVGroup automatically takes care of adding
-commands to the undo stack.
-This implementation of a TFV editor is pretty specific to TFVs in EditorAttacks' EMPs' EMPAs' TFVs (mainly
-because of the callback signal).
-*/
-class EMPAAngleOffsetGroup : public tgui::Group {
-public:
-	EMPAAngleOffsetGroup(UndoStack& undoStack);
-
-	/*
-	Should be called whenever this widget's container is resized.
-	This function automatically sets the height of this widget.
-	*/
-	void onContainerResize(int containerWidth, int containerHeight);
-
-	inline std::shared_ptr<entt::SigH<void(std::shared_ptr<EMPAction>, std::shared_ptr<EditorMovablePoint>, std::shared_ptr<EditorAttack>)>> getOnAngleOffsetChange() { return onAngleOffsetChange; }
-
-private:
-	UndoStack& undoStack;
-
-	std::shared_ptr<EMPAAngleOffset> angleOffset;
-	std::shared_ptr<EMPAction> parentEMPA;
-	std::shared_ptr<EditorMovablePoint> parentEMP;
-	std::shared_ptr<EditorAttack> parentAttack;
-
-	std::shared_ptr<tgui::ComboBox> offsetType;
-	std::shared_ptr<SliderWithEditBox> x;
-	std::shared_ptr<SliderWithEditBox> y;
-
-	// Signal emitted AFTER a change is made to the EMPAAngleOffset
-	// The EMPA parameter is the EMPA that the TFV being edited belongs to. The EMP parameter is the EMP that the EMPA belongs to.
-	// The EditorAttack parameter is the EditorAttack that the EMP belongs to.
-	std::shared_ptr<entt::SigH<void(std::shared_ptr<EMPAction>, std::shared_ptr<EditorMovablePoint>, std::shared_ptr<EditorAttack>)>> onAngleOffsetChange;
-
-	// This bool is used to prevent infinite loops (ie a change from an undo creating an undo command)
-	bool ignoreSignal = false;
-};
 
 /*
 A tgui::ListBox that can scroll horizontally as well as vertically.
@@ -338,4 +273,145 @@ private:
 	std::shared_ptr<tgui::ListBox> listBox;
 	std::shared_ptr<tgui::Label> textWidthChecker;
 	float longestWidth;
+};
+
+/*
+Used to edit TFVs.
+This widget will use the widgets in tfvEditorWindow to .
+It is recommended that if there are multiple TFVGroups being used, that TFVs
+*/
+class TFVGroup : public tgui::Group {
+public:
+	TFVGroup(std::shared_ptr<std::recursive_mutex> tguiMutex, float paddingX = 20, float paddingY = 10);
+
+	void beginEditing();
+	/*
+	saveEditedTFV - if true, the onEditingEnd signal will emit the (unmodified TFV, unmodified TFV). If false, it will emit (unmodified TFV, modified TFV) instead
+	*/
+	void endEditing(bool saveEditedTFV);
+	/*
+	Same thing as endEditing(false).
+	*/
+	void endEditingWithoutSaving();
+
+	/*
+	Should be called whenever this widget's container is resized.
+	This function automatically sets the height of this widget.
+	*/
+	void onContainerResize(int containerWidth, int containerHeight);
+
+	/*
+	Initialize this widget to tfv's values.
+	tfv won't be modified by this widget
+
+	tfvIdentifier - some unique string so that whatever's using TFVGroup knows what TFV is being edited.
+		eg We are editing a MoveCustomPolarEMPA's distance TFV using this TFVGroup, so we pass "distance"
+		into tfvIdentifier. Then when we catch the onSave signal, we see that the identifier is "distance"
+		so we know to set the MoveCustomPolarEMPA's distance TFV to the newly updated TFV.
+	*/
+	void setTFV(std::shared_ptr<TFV> tfv, float tfvLifespan, std::string tfvIdentifier);
+	inline std::shared_ptr<entt::SigH<void()>> getOnEditingStart() { return onEditingStart; }
+	inline std::shared_ptr<entt::SigH<void(std::shared_ptr<TFV>, std::shared_ptr<TFV>, std::string, bool)>> getOnEditingEnd() { return onEditingEnd; }
+	inline std::shared_ptr<entt::SigH<void(std::shared_ptr<TFV>, std::shared_ptr<TFV>, std::string)>> getOnSave() { return onSave; }
+
+private:
+	const float TFV_TIME_RESOLUTION = 0.05f; // Time between each tfv curve vertex
+
+	float paddingX, paddingY;
+
+	std::shared_ptr<std::recursive_mutex> tguiMutex;
+	std::recursive_mutex tfvMutex;
+
+	UndoStack undoStack;
+	std::thread tfvEditorWindowThread;
+	std::shared_ptr<UndoableEditorWindow> tfvEditorWindow;
+
+	std::shared_ptr<tgui::ScrollablePanel> panel;
+	std::shared_ptr<tgui::Button> showGraph;
+	std::shared_ptr<tgui::Button> finishEditing;
+	std::shared_ptr<tgui::Button> saveTFV;
+
+	std::shared_ptr<tgui::Button> addSegment;
+	std::shared_ptr<tgui::Button> deleteSegment;
+	std::shared_ptr<tgui::Label> startTimeLabel;
+	std::shared_ptr<SliderWithEditBox> startTime;
+	std::shared_ptr<tgui::Button> changeSegmentType;
+	std::shared_ptr<ScrollableListBox> segmentTypePopup;
+
+	std::shared_ptr<ScrollableListBox> segmentList; // Each item ID is the index of the segment in tfv's segment vector
+	std::shared_ptr<tgui::Label> tfvFloat1Label;
+	std::shared_ptr<SliderWithEditBox> tfvFloat1Slider;
+	std::shared_ptr<tgui::Label> tfvFloat2Label;
+	std::shared_ptr<SliderWithEditBox> tfvFloat2Slider;
+	std::shared_ptr<tgui::Label> tfvFloat3Label;
+	std::shared_ptr<SliderWithEditBox> tfvFloat3Slider;
+	std::shared_ptr<tgui::Label> tfvFloat4Label;
+	std::shared_ptr<SliderWithEditBox> tfvFloat4Slider;
+	std::shared_ptr<tgui::Label> tfvInt1Label;
+	std::shared_ptr<SliderWithEditBox> tfvInt1Slider;
+
+	std::shared_ptr<TFV> oldTFV; // Should never be modified after setTFV() is called
+	std::shared_ptr<PiecewiseTFV> tfv;
+	std::string tfvIdentifier;
+	std::shared_ptr<TFV> selectedSegment;
+	int selectedSegmentIndex = -1;
+	float tfvLifespan; // Shouldn't be modified except by setTFV()
+
+	std::shared_ptr<tgui::Label> tfvShortDescription;
+	std::shared_ptr<tgui::Button> beginEditingButton;
+
+	// Signal emitted after the user begins using this TFVGroup to edit a TFV
+	std::shared_ptr<entt::SigH<void()>> onEditingStart;
+	// Signal emitted after the user stops using this TFVGroup to edit a TFV
+	// 3 parameters in order: the old TFV with no changes applied, the old TFV with changes applied, and whether to apply changes in whatever's using TFVGroup
+	std::shared_ptr<entt::SigH<void(std::shared_ptr<TFV>, std::shared_ptr<TFV>, std::string, bool)>> onEditingEnd;
+	// Signal emitted after the user saves the TFV
+	std::shared_ptr<entt::SigH<void(std::shared_ptr<TFV>, std::shared_ptr<TFV>, std::string)>> onSave;
+
+	bool ignoreSignal = false;
+
+	void deselectSegment();
+	void selectSegment(int index);
+	void populateSegmentList();
+
+	void onTFVEditorWindowResize(int windowWidth, int windowHeight);
+	void onTFVFloat1SliderChange(float value);
+	void onTFVFloat2SliderChange(float value);
+	void onTFVFloat3SliderChange(float value);
+	void onTFVFloat4SliderChange(float value);
+	void onTFVInt1SliderChange(float value);
+	void onSelectedSegmentStartTimeChange(float value);
+};
+
+/*
+Used to edit EMPAAngleOffsets.
+*/
+class EMPAAngleOffsetGroup : public tgui::Group {
+public:
+	EMPAAngleOffsetGroup();
+
+	/*
+	Should be called whenever this widget's container is resized.
+	This function automatically sets the height of this widget.
+	*/
+	void onContainerResize(int containerWidth, int containerHeight);
+
+	/*
+	Initialize this widget to offset's values.
+	offset won't be modified by this widget
+	*/
+	void setEMPAAngleOffset(std::shared_ptr<EMPAAngleOffset> offset);
+	inline std::shared_ptr<entt::SigH<void(std::shared_ptr<EMPAAngleOffset>, std::shared_ptr<EMPAAngleOffset>)>> getOnAngleOffsetChange() { return onAngleOffsetChange; }
+
+private:
+	std::shared_ptr<EMPAAngleOffset> oldAngleOffset; // Should never be modified after setEMPAAngleOffset() is called
+	std::shared_ptr<EMPAAngleOffset> angleOffset;
+
+	std::shared_ptr<tgui::ComboBox> offsetType;
+	std::shared_ptr<SliderWithEditBox> x;
+	std::shared_ptr<SliderWithEditBox> y;
+
+	// Signal emitted AFTER a change is made to the EMPAAngleOffset
+	// 2 parameters in order: the old EMPAAngleOffset with no changes applied and the old EMPAAngleOffset with changes applied
+	std::shared_ptr<entt::SigH<void(std::shared_ptr<EMPAAngleOffset>, std::shared_ptr<EMPAAngleOffset>)>> onAngleOffsetChange;
 };
