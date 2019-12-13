@@ -49,7 +49,6 @@ LevelPack::LevelPack(AudioPlayer& audioPlayer, std::string name) : audioPlayer(a
 	attack2emp0->setBulletModel(model1);
 	attack2emp0->setSpawnType(std::make_shared<EntityRelativeEMPSpawn>(1, 0, 0));
 	auto distanceSegments = std::make_shared<PiecewiseTFV>();
-	auto distanceSegments = std::make_shared<PiecewiseTFV>();
 	distanceSegments->insertSegment(std::make_pair(0, std::make_shared<LinearTFV>(0, 100, 1)));
 	distanceSegments->insertSegment(std::make_pair(2, std::make_shared<LinearTFV>(100, 200, 2)));
 	distanceSegments->insertSegment(std::make_pair(4, std::make_shared<LinearTFV>(200, 300, 3)));
