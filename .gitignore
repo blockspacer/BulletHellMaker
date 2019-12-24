@@ -13,3 +13,7 @@ debug
 release
 x64
 .vs
+*.pro
+*.pro*
+*.pro.user
+BulletHellMaker.pro.user

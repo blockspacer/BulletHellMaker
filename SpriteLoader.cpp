@@ -53,7 +53,7 @@ std::shared_ptr<sf::Sprite> SpriteSheet::getSprite(const std::string& spriteName
 	std::shared_ptr<sf::Sprite> sprite = std::make_shared<sf::Sprite>();
 	sprite->setTexture(*textures[area]);
 	sprite->setColor(data->getColor());
-	sprite->setScale((float)data->getSpriteWidth() / area.width, (float)data->getSpriteHeight() / area.height);
+	sprite->setScale((float)data->getSpriteWidth() / area.width * globalSpriteScale, (float)data->getSpriteHeight() / area.height * globalSpriteScale);
 	sprite->setOrigin(data->getSpriteOriginX(), data->getSpriteOriginY());
 	return sprite;
 }
@@ -96,6 +96,15 @@ void SpriteSheet::preloadTextures() {
 	}
 }
 
+void SpriteSheet::setGlobalSpriteScale(float scale) {
+	globalSpriteScale = scale;
+	for (auto it = spriteData.begin(); it != spriteData.end(); it++) {
+		ComparableIntRect area = it->second->getArea();
+		getSprite(it->first)->setScale((float)it->second->getSpriteWidth() / area.width * globalSpriteScale, (float)it->second->getSpriteHeight() / area.height * globalSpriteScale);
+
+	}
+}
+
 bool SpriteData::operator==(const SpriteData & other) const {
 	return this->area == other.area && this->color == other.color;
 }
@@ -128,6 +137,12 @@ void SpriteLoader::preloadTextures() {
 
 void SpriteLoader::clearSpriteSheets() {
 	spriteSheets.clear();
+}
+
+void SpriteLoader::setGlobalSpriteScale(float scale) {
+	for (auto it = spriteSheets.begin(); it != spriteSheets.end(); it++) {
+		it->second->setGlobalSpriteScale(scale);
+	}
 }
 
 bool SpriteLoader::loadSpriteSheet(const std::string& spriteSheetMetaFileName, const std::string& spriteSheetImageFileName) {

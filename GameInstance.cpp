@@ -16,111 +16,20 @@
 
 #include <iostream>
 
-void GameInstance::updateWindowView(int windowWidth, int windowHeight) {
-	//sf::View view = window->getView();
-
-	//// Compares the aspect ratio of the window to the aspect ratio of the view,
-	//// and sets the view's viewport accordingly in order to archieve a letterbox effect.
-	//// A new view (with a new viewport set) is returned.
-	//float windowRatio = windowWidth / (float)windowHeight;
-	//float playAreaViewRatio = view.getSize().x / (float)view.getSize().y;
-	//// size of play area + gui region
-	//float playAreaSizeX = 1;
-	//float playAreaSizeY = 1;
-	//float guiAreaSizeX = 1;
-	//float posX = 0;
-	//float posY = 0;
-
-	//bool horizontalSpacing = true;
-	//if (windowRatio < playAreaViewRatio)
-	//	horizontalSpacing = false;
-
-	//// If horizontalSpacing is true, the black bars will appear on the left and right side.
-	//// Otherwise, the black bars will appear on the top and bottom.
-	//if (horizontalSpacing) {
-	//	playAreaSizeX = playAreaViewRatio / windowRatio;
-	//	guiAreaSizeX = std::min(1 - playAreaSizeX, std::max(playAreaSizeX * 0.5f, (float)scoreLabel->getSize().x/windowWidth));
-	//	posX = (1 - playAreaSizeX - guiAreaSizeX) / 2.f;
-	//} else {
-	//	playAreaSizeY = windowRatio / playAreaViewRatio;
-	//	posY = (1 - playAreaSizeY) / 2.f;
-	//}
-
-	//view.setViewport(sf::FloatRect(posX, posY, playAreaSizeX, playAreaSizeY));
-	//// Make sure nothing in the gui autoscales
-	//gui->setView(sf::View(sf::Vector2f(windowWidth/2.0f, windowHeight/2.0f), sf::Vector2f(windowWidth, windowHeight)));
-
-	//// Recalculate widths/positions of gui elements
-	////TODO: redo this entire part; what do sizeX and sizeY really represent????
-	//guiRegionX = (playAreaSizeX + posX) * windowWidth;
-	//guiRegionYLow = posY * windowHeight;
-	//guiRegionYHigh = (playAreaSizeY + posY) * windowHeight;
-	//guiRegionWidth = guiAreaSizeX * windowWidth;
-	//guiRegionHeight = guiRegionYHigh - guiRegionYLow;
-	//playAreaX = posX * windowWidth;
-	//float playAreaWidth = playAreaSizeX * windowWidth;
-	//// Since everything in the gui is bound to levelNameLabel's x position, only levelNameLabel's position needs to be updated 
-	//levelNameLabel->setPosition({ guiRegionX + guiPaddingX, guiPaddingY });
-
-	//levelNameLabel->setMaximumTextWidth(guiRegionWidth - guiPaddingX * 2.0f);
-
-	//bombPictureSize = std::max(bombPictureSizeMin, std::min(bombPictureSizeMax, (guiRegionWidth - guiPaddingX * 2) / levelPack->getPlayer().getMaxBombs()));
-	//bombPictureDisplayMax = (int)(guiRegionWidth - 2 * guiPaddingX) / (bombPictureSize + guiPaddingX);
-	//for (int i = 0; i < bombPictures.size(); i++) {
-	//	bombPictures[i]->setSize(bombPictureSize, bombPictureSize);
-	//}
-	//if (registry.valid(registry.attachee<PlayerTag>())) {
-	//	onPlayerBombCountChange(registry.get<PlayerTag>().getBombCount());
-	//}
-
-	//bombPictureGrid->setPosition({ tgui::bindLeft(levelNameLabel), guiRegionHeight - bombPictureSize - guiPaddingY });
-
-	//if (playerHPProgressBar) {
-	//	playerHPProgressBar->setSize(guiRegionWidth - guiPaddingX * 2.0f, 22);
-	//} else {
-	//	playerHPPictureSize = std::max(playerHPPictureSizeMin, std::min(playerHPPictureSizeMax, (guiRegionWidth - guiPaddingX * 2) / levelPack->getPlayer().getMaxHealth()));
-	//	playerHPPictureDisplayMax = (int)(guiRegionWidth - 2 * guiPaddingX) / (playerHPPictureSize + guiPaddingX);
-	//	for (int i = 0; i < playerHPPictures.size(); i++) {
-	//		playerHPPictures[i]->setSize(playerHPPictureSize, playerHPPictureSize);
-	//	}
-	//	playerHPPictureGrid->setPosition({ tgui::bindLeft(bombPictureGrid), tgui::bindTop(bombLabel) - guiPaddingY - playerHPPictureSize });
-	//	if (registry.valid(registry.attachee<PlayerTag>())) {
-	//		onPlayerHPChange(registry.get<HealthComponent>(registry.attachee<PlayerTag>()).getHealth(), registry.get<HealthComponent>(registry.attachee<PlayerTag>()).getMaxHealth());
-	//	}
-	//}
-
-	//bossLabel->setPosition(playAreaX, guiRegionYLow);
-
-	//bossPhaseHealthBar->setSize(playAreaWidth, bossPhaseHealthBarHeight);
-	//bossPhaseHealthBar->setPosition(playAreaX, guiRegionYLow);
-
-	//if (bossPhaseTimeLeft->isVisible() && registry.valid(registry.attachee<PlayerTag>())) {
-	//	uint32_t player = registry.attachee<PlayerTag>();
-	//	auto& playerHitbox = registry.get<HitboxComponent>(player);
-	//	auto& pos = registry.get<PositionComponent>(player);
-	//	if (pos.getX() + playerHitbox.getX() - playerHitbox.getRadius() < MAP_WIDTH / 2.0f) {
-	//		bossPhaseTimeLeft->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Right);
-	//		bossPhaseTimeLeft->setPosition(guiRegionX - bossPhaseTimeLeft->getSize().x, guiRegionYHigh - bossPhaseTimeLeft->getSize().y);
-	//	} else {
-	//		bossPhaseTimeLeft->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Left);
-	//		bossPhaseTimeLeft->setPosition(playAreaX, guiRegionYHigh - bossPhaseTimeLeft->getSize().y);
-	//	}
-	//}
-
-	//window->setView(view);
-}
-
-GameInstance::GameInstance(std::string levelPackName) {
+GameInstance::GameInstance(std::string levelPackName, QWidget* parent, const QPoint& position, const QSize& size) {
 	audioPlayer = std::make_unique<AudioPlayer>();
 	levelPack = std::make_unique<LevelPack>(*audioPlayer, levelPackName);
 
 	//TODO: these numbers should come from settings
-	window = std::make_unique<sf::RenderWindow>(sf::VideoMode(1600, 900), "Bullet Hell Maker");
+	//window = std::make_unique<sf::RenderWindow>(sf::VideoMode(1600, 900), "Bullet Hell Maker");
+	window = new GameInstanceCanvas(this, parent, position, size);
 	window->setKeyRepeatEnabled(false);
 
 	// Centered at negative y because SFML has (0, 0) at the top-left, and RenderSystem negates y-values so that (0, 0) in every other aspect of this game is bottom-left.
-	sf::View view(sf::FloatRect(0, -MAP_HEIGHT, MAP_WIDTH, MAP_HEIGHT));
-	window->setView(view);
+	//sf::View view(sf::FloatRect(0, 0, MAP_WIDTH, MAP_HEIGHT));
+	//window->setView(view);
+	window->resize(window->size());
+	//window->show();
 
 	// Create these first because updateWindowView uses them
 	//gui = std::make_shared<tgui::Gui>(*window);
@@ -158,7 +67,7 @@ GameInstance::GameInstance(std::string levelPackName) {
 	//scoreLabel->setMaximumTextWidth(0);
 	//scoreLabel->setText((boost::format("Score\n%010d") % 0).str());
 
-	updateWindowView(window->getSize().x, window->getSize().y);
+	//updateWindowView(window->getSize().x, window->getSize().y);
 
 	windowHeight = window->getSize().y;
 
@@ -169,7 +78,7 @@ GameInstance::GameInstance(std::string levelPackName) {
 
 	movementSystem = std::make_unique<MovementSystem>(*queue, *spriteLoader, registry);
 	//TODO: these numbers should come from settings
-	renderSystem = std::make_unique<RenderSystem>(registry, *window, 1024, 768);
+	renderSystem = std::make_unique<RenderSystem>(registry, *window, *spriteLoader, 3.0f);
 	collisionSystem = std::make_unique<CollisionSystem>(*levelPack, *queue, *spriteLoader, registry, MAP_WIDTH, MAP_HEIGHT);
 	despawnSystem = std::make_unique<DespawnSystem>(registry);
 	enemySystem = std::make_unique<EnemySystem>(*queue, *spriteLoader, *levelPack, registry);
@@ -273,20 +182,22 @@ void GameInstance::start() {
 	sf::Clock deltaClock;
 
 	// Game loop
-	while (window->isOpen() && !gameInstanceCloseQueued) {
+	/*
+	while (!gameInstanceCloseQueued) {
 		// While behind in render updates, do physics updates
 		float timeSinceLastRender = 0;
 		while (timeSinceLastRender < RENDER_INTERVAL) {
 			sf::Event event;
 			while (window->pollEvent(event)) {
 				if (event.type == sf::Event::Closed) {
-					window->close();
+					window->sf::RenderWindow::close();
 				} else if (event.type == sf::Event::Resized) {
 					updateWindowView(event.size.width, event.size.height);
 				} else {
 					handleEvent(event);
 				}
 			}
+			
 
 			if (paused) {
 				break;
@@ -301,10 +212,11 @@ void GameInstance::start() {
 			timeSinceLastRender += dt;
 		}
 
-		window->clear();
+		//window->clear();
 		render(timeSinceLastRender);
-		window->display();
+		//window->display();
 	}
+	*/
 }
 
 void GameInstance::close() {
@@ -376,6 +288,10 @@ void GameInstance::render(float deltaTime) {
 	//gui->draw();
 }
 
+sf::Vector2u GameInstance::getResolution() {
+	return renderSystem->getResolution();
+}
+
 void GameInstance::loadLevel(int levelIndex) {
 	std::shared_ptr<Level> level = levelPack->getLevel(levelIndex);
 
@@ -415,6 +331,8 @@ void GameInstance::loadLevel(int levelIndex) {
 	renderSystem->setBackground(std::move(background));
 	renderSystem->setBackgroundScrollSpeedX(level->getBackgroundScrollSpeedX());
 	renderSystem->setBackgroundScrollSpeedY(level->getBackgroundScrollSpeedY());
+	renderSystem->setBackgroundTextureWidth(level->getBackgroundTextureWidth());
+	renderSystem->setBackgroundTextureHeight(level->getBackgroundTextureHeight());
 
 	// Initialize gui stuff
 	onPlayerHPChange(registry.get<HealthComponent>(registry.attachee<PlayerTag>()).getHealth(), registry.get<HealthComponent>(registry.attachee<PlayerTag>()).getMaxHealth());
@@ -579,4 +497,123 @@ void GameInstance::createPlayer(EditorPlayer params) {
 	playerTag.getPowerChangeSignal()->sink().connect<GameInstance, &GameInstance::onPlayerPowerLevelChange>(this);
 	playerTag.getBombCountChangeSignal()->sink().connect<GameInstance, &GameInstance::onPlayerBombCountChange>(this);
 	registry.get<LevelManagerTag>().getEnemySpawnSignal()->sink().connect<GameInstance, &GameInstance::onEnemySpawn>(this);
+}
+
+void GameInstanceCanvas::OnInit() {
+	resize(size());
+}
+
+void GameInstanceCanvas::resizeEvent(QResizeEvent* event) {
+	QSFMLCanvas::resizeEvent(event);
+
+	sf::Vector2u resolution = gameInstance->getResolution();
+	sf::View view(sf::FloatRect(0, 0, resolution.x, resolution.y));
+
+	// Compares the aspect ratio of the window to the aspect ratio of the view,
+	// and sets the view's viewport accordingly in order to archieve a letterbox effect.
+	// A new view (with a new viewport set) is returned.
+	float windowRatio = event->size().width() / (float)event->size().height();
+	float playAreaViewRatio = view.getSize().x / (float)view.getSize().y;
+	// size of play area + gui region
+	float playAreaSizeX = 1;
+	float playAreaSizeY = 1;
+	float guiAreaSizeX = 1;
+	float posX = 0;
+	float posY = 0;
+
+	bool horizontalSpacing = true;
+	if (windowRatio < playAreaViewRatio)
+		horizontalSpacing = false;
+
+	// If horizontalSpacing is true, the black bars will appear on the left and right side.
+	// Otherwise, the black bars will appear on the top and bottom.
+	if (horizontalSpacing) {
+		playAreaSizeX = playAreaViewRatio / windowRatio;
+		//guiAreaSizeX = std::min(1 - playAreaSizeX, std::max(playAreaSizeX * 0.5f, 0.3f));
+		posX = (1 - playAreaSizeX) / 2.f;
+	}
+	else {
+		playAreaSizeY = windowRatio / playAreaViewRatio;
+		posY = (1 - playAreaSizeY) / 2.f;
+	}
+
+	view.setViewport(sf::FloatRect(posX, posY, playAreaSizeX, playAreaSizeY));
+	//// Make sure nothing in the gui autoscales
+	//gui->setView(sf::View(sf::Vector2f(windowWidth/2.0f, windowHeight/2.0f), sf::Vector2f(windowWidth, windowHeight)));
+
+	//// Recalculate widths/positions of gui elements
+	////TODO: redo this entire part; what do sizeX and sizeY really represent????
+	//guiRegionX = (playAreaSizeX + posX) * windowWidth;
+	//guiRegionYLow = posY * windowHeight;
+	//guiRegionYHigh = (playAreaSizeY + posY) * windowHeight;
+	//guiRegionWidth = guiAreaSizeX * windowWidth;
+	//guiRegionHeight = guiRegionYHigh - guiRegionYLow;
+	//playAreaX = posX * windowWidth;
+	//float playAreaWidth = playAreaSizeX * windowWidth;
+	//// Since everything in the gui is bound to levelNameLabel's x position, only levelNameLabel's position needs to be updated 
+	//levelNameLabel->setPosition({ guiRegionX + guiPaddingX, guiPaddingY });
+
+	//levelNameLabel->setMaximumTextWidth(guiRegionWidth - guiPaddingX * 2.0f);
+
+	//bombPictureSize = std::max(bombPictureSizeMin, std::min(bombPictureSizeMax, (guiRegionWidth - guiPaddingX * 2) / levelPack->getPlayer().getMaxBombs()));
+	//bombPictureDisplayMax = (int)(guiRegionWidth - 2 * guiPaddingX) / (bombPictureSize + guiPaddingX);
+	//for (int i = 0; i < bombPictures.size(); i++) {
+	//	bombPictures[i]->setSize(bombPictureSize, bombPictureSize);
+	//}
+	//if (registry.valid(registry.attachee<PlayerTag>())) {
+	//	onPlayerBombCountChange(registry.get<PlayerTag>().getBombCount());
+	//}
+
+	//bombPictureGrid->setPosition({ tgui::bindLeft(levelNameLabel), guiRegionHeight - bombPictureSize - guiPaddingY });
+
+	//if (playerHPProgressBar) {
+	//	playerHPProgressBar->setSize(guiRegionWidth - guiPaddingX * 2.0f, 22);
+	//} else {
+	//	playerHPPictureSize = std::max(playerHPPictureSizeMin, std::min(playerHPPictureSizeMax, (guiRegionWidth - guiPaddingX * 2) / levelPack->getPlayer().getMaxHealth()));
+	//	playerHPPictureDisplayMax = (int)(guiRegionWidth - 2 * guiPaddingX) / (playerHPPictureSize + guiPaddingX);
+	//	for (int i = 0; i < playerHPPictures.size(); i++) {
+	//		playerHPPictures[i]->setSize(playerHPPictureSize, playerHPPictureSize);
+	//	}
+	//	playerHPPictureGrid->setPosition({ tgui::bindLeft(bombPictureGrid), tgui::bindTop(bombLabel) - guiPaddingY - playerHPPictureSize });
+	//	if (registry.valid(registry.attachee<PlayerTag>())) {
+	//		onPlayerHPChange(registry.get<HealthComponent>(registry.attachee<PlayerTag>()).getHealth(), registry.get<HealthComponent>(registry.attachee<PlayerTag>()).getMaxHealth());
+	//	}
+	//}
+
+	//bossLabel->setPosition(playAreaX, guiRegionYLow);
+
+	//bossPhaseHealthBar->setSize(playAreaWidth, bossPhaseHealthBarHeight);
+	//bossPhaseHealthBar->setPosition(playAreaX, guiRegionYLow);
+
+	//if (bossPhaseTimeLeft->isVisible() && registry.valid(registry.attachee<PlayerTag>())) {
+	//	uint32_t player = registry.attachee<PlayerTag>();
+	//	auto& playerHitbox = registry.get<HitboxComponent>(player);
+	//	auto& pos = registry.get<PositionComponent>(player);
+	//	if (pos.getX() + playerHitbox.getX() - playerHitbox.getRadius() < MAP_WIDTH / 2.0f) {
+	//		bossPhaseTimeLeft->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Right);
+	//		bossPhaseTimeLeft->setPosition(guiRegionX - bossPhaseTimeLeft->getSize().x, guiRegionYHigh - bossPhaseTimeLeft->getSize().y);
+	//	} else {
+	//		bossPhaseTimeLeft->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Left);
+	//		bossPhaseTimeLeft->setPosition(playAreaX, guiRegionYHigh - bossPhaseTimeLeft->getSize().y);
+	//	}
+	//}
+
+	setView(view);
+}
+
+void GameInstanceCanvas::OnUpdate() {
+	while (timeSinceLastRender < RENDER_INTERVAL) {
+		if (gameInstance->isPaused()) {
+			break;
+		}
+
+		float dt = std::min(MAX_PHYSICS_DELTA_TIME, deltaClock.restart().asSeconds());
+		gameInstance->physicsUpdate(dt);
+
+		timeSinceLastRender += dt;
+	}
+
+	clear();
+	gameInstance->render(timeSinceLastRender);
+	timeSinceLastRender = 0;
 }

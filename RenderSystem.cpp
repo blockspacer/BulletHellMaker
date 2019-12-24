@@ -4,7 +4,7 @@
 #include <cmath>
 #include "Level.h"
 
-RenderSystem::RenderSystem(entt::DefaultRegistry & registry, sf::RenderWindow & window, float playAreaWidth, float playAreaHeight) : registry(registry), window(window) {
+RenderSystem::RenderSystem(entt::DefaultRegistry & registry, sf::RenderWindow & window, SpriteLoader& spriteLoader, float resolutionMultiplier) : registry(registry), window(window), resolutionMultiplier(resolutionMultiplier) {
 	// Initialize layers to be size of the max layer
 	layers = std::vector<std::pair<int, std::vector<std::reference_wrapper<SpriteComponent>>>>(HIGHEST_RENDER_LAYER + 1);
 	layers[SHADOW_LAYER] = std::make_pair(SHADOW_LAYER, std::vector<std::reference_wrapper<SpriteComponent>>());
@@ -15,7 +15,7 @@ RenderSystem::RenderSystem(entt::DefaultRegistry & registry, sf::RenderWindow & 
 	layers[ITEM_LAYER] = std::make_pair(ITEM_LAYER, std::vector<std::reference_wrapper<SpriteComponent>>());
 	layers[ENEMY_BULLET_LAYER] = std::make_pair(ENEMY_BULLET_LAYER, std::vector<std::reference_wrapper<SpriteComponent>>());
 
-	setResolution(playAreaWidth, playAreaHeight);
+	setResolution(spriteLoader, resolutionMultiplier);
 
 	// Initialize global shaders
 
@@ -86,7 +86,7 @@ void RenderSystem::update(float deltaTime) {
 
 	auto view = registry.view<PositionComponent, SpriteComponent>(entt::persistent_t{});
 	view.each([&](auto entity, auto& position, auto& sprite) {
-		sprite.getSprite()->setPosition(position.getX(), -position.getY());
+		sprite.getSprite()->setPosition(position.getX() * resolutionMultiplier, -position.getY() * resolutionMultiplier);
 		layers[sprite.getRenderLayer()].second.push_back(std::ref(sprite));
 	});
 
@@ -97,18 +97,22 @@ void RenderSystem::update(float deltaTime) {
 	// Move background
 	backgroundX = std::fmod((backgroundX + backgroundScrollSpeedX * deltaTime), backgroundTextureSizeX);
 	backgroundY = std::fmod((backgroundY + backgroundScrollSpeedY * deltaTime), backgroundTextureSizeY);
-	backgroundSprite.setTextureRect(sf::IntRect(backgroundX, backgroundY, MAP_WIDTH, MAP_HEIGHT));
+	backgroundSprite.setTextureRect(sf::IntRect(backgroundX, backgroundY, backgroundTextureWidth, backgroundTextureHeight));
+
+	sf::View originalView = sf::View(window.getView());
 
 	// Draw background by drawing onto the temp layer first to limit the visible part of the background to the play area
 	tempLayerTexture.clear(sf::Color::Transparent);
-	backgroundSprite.setPosition(0, -MAP_HEIGHT);
+
+	backgroundSprite.setPosition(0, -MAP_HEIGHT * resolutionMultiplier);
 	tempLayerTexture.draw(backgroundSprite);
 	tempLayerTexture.display();
 	sf::Sprite backgroundAsSprite(tempLayerTexture.getTexture());
-	backgroundAsSprite.setPosition(0, -(float)tempLayerTexture.getSize().y);
 	sf::RenderStates backgroundStates;
 	backgroundStates.blendMode = DEFAULT_BLEND_MODE;
 	window.draw(backgroundAsSprite, backgroundStates);
+
+	window.setView(originalView);
 
 	for (int i = 0; i < layers.size(); i++) {
 		for (SpriteComponent& sprite : layers[i].second) {
@@ -134,7 +138,6 @@ void RenderSystem::update(float deltaTime) {
 						sf::Sprite textureAsSprite(layerTextures[i].getTexture());
 						// idk why this is needed but it is
 						textureAsSprite.setScale(spriteHorizontalScale, spriteVerticalScale);
-						textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 						tempLayerTexture.clear(sf::Color::Transparent);
 						sf::RenderStates states;
@@ -146,7 +149,6 @@ void RenderSystem::update(float deltaTime) {
 						sf::Sprite textureAsSprite(tempLayerTexture.getTexture());
 						// idk why this is needed but it is
 						textureAsSprite.setScale(spriteHorizontalScale, spriteVerticalScale);
-						textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 						layerTextures[i].clear(sf::Color::Transparent);
 						sf::RenderStates states;
@@ -179,7 +181,6 @@ void RenderSystem::update(float deltaTime) {
 							sf::Sprite textureAsSprite(layerTextures[i].getTexture());
 							// idk why this is needed but it is
 							textureAsSprite.setScale(spriteHorizontalScale, spriteVerticalScale);
-							textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 							tempLayerTexture.clear(sf::Color::Transparent);
 							sf::RenderStates states;
@@ -191,7 +192,6 @@ void RenderSystem::update(float deltaTime) {
 							sf::Sprite textureAsSprite(tempLayerTexture.getTexture());
 							// idk why this is needed but it is
 							textureAsSprite.setScale(spriteHorizontalScale, spriteVerticalScale);
-							textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 							layerTextures[i].clear(sf::Color::Transparent);
 							sf::RenderStates states;
@@ -205,14 +205,12 @@ void RenderSystem::update(float deltaTime) {
 					// draw blurred onto window
 					if (alt) {
 						sf::Sprite textureAsSprite(tempLayerTexture.getTexture());
-						textureAsSprite.setPosition(0, -(float)tempLayerTexture.getSize().y);
 						sf::RenderStates states;
 						states.shader = &bloomGlowShader;
 						states.blendMode = sf::BlendAdd;
 						window.draw(textureAsSprite, states);
 					} else {
 						sf::Sprite textureAsSprite(layerTextures[i].getTexture());
-						textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 						sf::RenderStates states;
 						states.shader = &bloomGlowShader;
@@ -221,7 +219,6 @@ void RenderSystem::update(float deltaTime) {
 					}
 					// draw nonblurred onto window
 					sf::Sprite textureAsSprite2(nonblurredTexture);
-					textureAsSprite2.setPosition(0, -(float)tempLayerTexture.getSize().y);
 					sf::RenderStates states;
 					states.shader = &bloomGlowShader;
 					states.blendMode = bloom[i].getBlendMode();
@@ -248,7 +245,6 @@ void RenderSystem::update(float deltaTime) {
 							sf::Sprite textureAsSprite(layerTextures[i].getTexture());
 							// idk why this is needed but it is
 							textureAsSprite.setScale(spriteHorizontalScale, spriteVerticalScale);
-							textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 							tempLayerTexture.clear(sf::Color::Transparent);
 							sf::RenderStates states;
@@ -260,7 +256,6 @@ void RenderSystem::update(float deltaTime) {
 							sf::Sprite textureAsSprite(tempLayerTexture.getTexture());
 							// idk why this is needed but it is
 							textureAsSprite.setScale(spriteHorizontalScale, spriteVerticalScale);
-							textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 							layerTextures[i].clear(sf::Color::Transparent);
 							sf::RenderStates states;
@@ -274,14 +269,12 @@ void RenderSystem::update(float deltaTime) {
 					// draw blurred onto window
 					if (alt) {
 						sf::Sprite textureAsSprite(tempLayerTexture.getTexture());
-						textureAsSprite.setPosition(0, -(float)tempLayerTexture.getSize().y);
 						sf::RenderStates states;
 						states.shader = &bloomGlowShader;
 						states.blendMode = sf::BlendAdd;
 						window.draw(textureAsSprite, states);
 					} else {
 						sf::Sprite textureAsSprite(layerTextures[i].getTexture());
-						textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 						sf::RenderStates states;
 						states.shader = &bloomGlowShader;
@@ -290,7 +283,6 @@ void RenderSystem::update(float deltaTime) {
 					}
 					// draw nonblurred onto window
 					sf::Sprite textureAsSprite2(nonblurredTexture);
-					textureAsSprite2.setPosition(0, -(float)tempLayerTexture.getSize().y);
 					sf::RenderStates states;
 					states.shader = &bloomGlowShader;
 					states.blendMode = bloom[i].getBlendMode();
@@ -318,7 +310,6 @@ void RenderSystem::update(float deltaTime) {
 						sf::Sprite textureAsSprite(layerTextures[i].getTexture());
 						// idk why this is needed but it is
 						textureAsSprite.setScale(spriteHorizontalScale, spriteVerticalScale);
-						textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 						tempLayerTexture.clear(sf::Color::Transparent);
 						sf::RenderStates states;
@@ -330,7 +321,6 @@ void RenderSystem::update(float deltaTime) {
 						sf::Sprite textureAsSprite(tempLayerTexture.getTexture());
 						// idk why this is needed but it is
 						textureAsSprite.setScale(spriteHorizontalScale, spriteVerticalScale);
-						textureAsSprite.setPosition(0, -(float)tempLayerTexture.getSize().y);
 
 						layerTextures[i].clear(sf::Color::Transparent);
 						sf::RenderStates states;
@@ -344,7 +334,6 @@ void RenderSystem::update(float deltaTime) {
 				// draw blurred onto window
 				if (alt) {
 					sf::Sprite textureAsSprite(tempLayerTexture.getTexture());
-					textureAsSprite.setPosition(0, -(float)tempLayerTexture.getSize().y);
 
 					sf::RenderStates states;
 					states.shader = &bloomGlowShader;
@@ -352,7 +341,6 @@ void RenderSystem::update(float deltaTime) {
 					window.draw(textureAsSprite, states);
 				} else {
 					sf::Sprite textureAsSprite(layerTextures[i].getTexture());
-					textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 					sf::RenderStates states;
 					states.shader = &bloomGlowShader;
@@ -361,7 +349,6 @@ void RenderSystem::update(float deltaTime) {
 				}
 				// draw nonblurred onto window
 				sf::Sprite textureAsSprite2(nonblurredTexture);
-				textureAsSprite2.setPosition(0, -(float)tempLayerTexture.getSize().y);
 				sf::RenderStates states;
 				states.shader = &bloomGlowShader;
 				states.blendMode = bloom[i].getBlendMode();
@@ -371,7 +358,6 @@ void RenderSystem::update(float deltaTime) {
 			if (globalShaders.count(i) > 0) {
 				if (globalShaders[i].size() == 1) {
 					sf::Sprite textureAsSprite(layerTextures[i].getTexture());
-					textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 					sf::RenderStates states;
 					states.shader = &(*globalShaders[i][0]);
@@ -385,7 +371,6 @@ void RenderSystem::update(float deltaTime) {
 							sf::Sprite textureAsSprite(layerTextures[i].getTexture());
 							// idk why this is needed but it is
 							textureAsSprite.setScale(spriteHorizontalScale, spriteVerticalScale);
-							textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 							tempLayerTexture.clear(sf::Color::Transparent);
 							sf::RenderStates states;
@@ -397,7 +382,6 @@ void RenderSystem::update(float deltaTime) {
 							sf::Sprite textureAsSprite(tempLayerTexture.getTexture());
 							// idk why this is needed but it is
 							textureAsSprite.setScale(spriteHorizontalScale, spriteVerticalScale);
-							textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 							layerTextures[i].clear(sf::Color::Transparent);
 							sf::RenderStates states;
@@ -409,11 +393,9 @@ void RenderSystem::update(float deltaTime) {
 					}
 					if (alt) {
 						sf::Sprite textureAsSprite(tempLayerTexture.getTexture());
-						textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 						window.draw(textureAsSprite);
 					} else {
 						sf::Sprite textureAsSprite(layerTextures[i].getTexture());
-						textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 						sf::RenderStates states;
 						states.blendMode = DEFAULT_BLEND_MODE;
@@ -422,7 +404,6 @@ void RenderSystem::update(float deltaTime) {
 				}
 			} else {
 				sf::Sprite textureAsSprite(layerTextures[i].getTexture());
-				textureAsSprite.setPosition(0, -(float)layerTextures[i].getSize().y);
 
 				sf::RenderStates states;
 				states.blendMode = DEFAULT_BLEND_MODE;
@@ -432,7 +413,12 @@ void RenderSystem::update(float deltaTime) {
 	}
 }
 
-void RenderSystem::setResolution(int newPlayAreaWidth, int newPlayAreaHeight) {
+void RenderSystem::setResolution(SpriteLoader& spriteLoader, float resolutionMultiplier) {
+	spriteLoader.setGlobalSpriteScale(resolutionMultiplier);
+
+	int newPlayAreaWidth = (int)std::round(MAP_WIDTH * resolutionMultiplier);
+	int newPlayAreaHeight = (int)std::round(MAP_HEIGHT * resolutionMultiplier);
+
 	sf::View view(sf::FloatRect(0, -newPlayAreaHeight, newPlayAreaWidth, newPlayAreaHeight));
 	for (int i = 0; i < HIGHEST_RENDER_LAYER + 1; i++) {
 		layerTextures[i].create(newPlayAreaWidth, newPlayAreaHeight);
@@ -454,6 +440,8 @@ void RenderSystem::setResolution(int newPlayAreaWidth, int newPlayAreaHeight) {
 	for (auto& shader : bloomBlurShaders) {
 		shader->setUniform("resolution", sf::Vector2f(newPlayAreaWidth, newPlayAreaHeight));
 	}
+
+	backgroundSprite.setScale(MAP_WIDTH/backgroundTextureWidth * resolutionMultiplier, MAP_HEIGHT/backgroundTextureHeight * resolutionMultiplier);
 }
 
 void RenderSystem::loadLevelRenderSettings(std::shared_ptr<Level> level) {
@@ -485,6 +473,10 @@ void RenderSystem::setBackground(sf::Texture background) {
 
 	// Create the sprite
 	backgroundSprite.setTexture(this->background);
+}
+
+sf::Vector2u RenderSystem::getResolution() {
+	return tempLayerTexture.getSize();
 }
 
 std::string BloomSettings::format() const {

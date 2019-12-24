@@ -14,13 +14,19 @@
 #include "PlayerSystem.h"
 #include "AudioPlayer.h"
 #include "CollectibleSystem.h"
+#include "GuiUtilities.h"
+#include <QResizeEvent>
 
 class LevelPack;
 class LevelManagerTag;
 
+
 class GameInstance {
 public:
-	GameInstance(std::string levelPackName);
+	GameInstance(std::string levelPackName, QWidget* parent, const QPoint& position, const QSize& size);
+	~GameInstance() {
+		delete window;
+	}
 
 	/*
 	Starts the game instance with the loaded level.
@@ -47,11 +53,15 @@ public:
 	void pause();
 	void resume();
 
-private:
-	void updateWindowView(int windowWidth, int windowHeight);
-
 	void physicsUpdate(float deltaTime);
 	void render(float deltaTime);
+
+	QSFMLCanvas* getWindow() { return window; }
+	bool isPaused() { return paused; }
+
+	sf::Vector2u getResolution();
+
+private:
 
 	bool gameInstanceCloseQueued = false;
 
@@ -60,7 +70,7 @@ private:
 	std::unique_ptr<EntityCreationQueue> queue;
 
 	entt::DefaultRegistry registry;
-	std::unique_ptr<sf::RenderWindow> window;
+	QSFMLCanvas* window;
 
 	std::unique_ptr<MovementSystem> movementSystem;
 	std::unique_ptr<RenderSystem> renderSystem;
@@ -180,4 +190,19 @@ private:
 	void onBossDespawn(uint32_t boss);
 
 	void createPlayer(EditorPlayer params);
+};
+
+class GameInstanceCanvas : public QSFMLCanvas {
+public:
+	GameInstanceCanvas(GameInstance* gameInstance, QWidget* parent, const QPoint& position, const QSize& size, unsigned int frameTime = 0) : QSFMLCanvas(parent, position, size, frameTime), gameInstance(gameInstance) {
+	}
+
+private:
+	GameInstance* gameInstance;
+	sf::Clock deltaClock;
+	float timeSinceLastRender = 0;
+
+	void OnInit();
+	void resizeEvent(QResizeEvent* event) override;
+	void OnUpdate() override;
 };
